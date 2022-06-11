@@ -49,7 +49,6 @@ that if a part of the API is hard to explain it is also hard to understand.
 Here is a list of the remaining tasks:
 
 - Handle options to parsers
-- Streaming parser
 - File parser
 - The manual
 - Recoverable errors, e.g. if a node needs to be an orphan offer a restart that

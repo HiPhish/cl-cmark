@@ -28,12 +28,60 @@
   ;; Needs the length of the UTF-8 bytes
   (error "Not implemented, do not use!"))
 
-;;; There is no streaming parser because there are memory safety issues: a
-;;; native streaming parser needs to be backed by a foreign streaming parser.
-;;; What if the native parser goes out of scope and is garbage collected before
-;;; it has finished? The foreign parser would never get freed, leading to a
-;;; memory leak.
+(defstruct (streaming-parser (:constructor nil))
+  (foreign-parser nil :type (or null cffi:foreign-pointer))
+  (exhausted-p nil :type boolean))
 
+(defun make-streaming-parser ()
+  "Creates a new streaming parser object. A streaming parser can be fed the
+  CommonMark document piecewise, then once the entire document has been fed to
+  it the parser can be finished, which produces the document node tree. It is
+  the caller's responsibility to close the stream."
+  (let ((result (make-instance 'streaming-parser)))
+    (with-slots (foreign-parser) result
+      (setf foreign-parser (libcmark:make-parser libcmark:+cmark-opt-default+))
+      result)))
+
+(defun feed-streaming-parser (parser string)
+  "Feed a STRING into the streaming PARSER."
+  (declare (type streaming-parser parser)
+           (type string string))
+  (with-slots (foreign-parser exhausted-p) parser
+    (when exhausted-p
+      (error "Trying to feed an exhausted streaming parser"))
+    (libcmark:parser-feed foreign-parser string (string-octet-length string))
+    nil))
+
+(defun close-streaming-parser (parser)
+  "Closes the streaming PARSER, rendering it exhausted. Any internal state of
+  the parser will be discarded. This function is idempotent: if the parser is
+  already closed nothing will happen."
+  (declare (type streaming-parser parser))
+  (with-slots (foreign-parser exhausted-p) parser
+    (when foreign-parser
+      (libcmark:free-parser foreign-parser))
+    (setf foreign-parser nil)
+    (setf exhausted-p t)))
+
+(defun finish-streaming-parser (parser)
+  "Returns the parsed node tree. Does not exhaust the parser, feeding the
+  parser or finishing it again is not an error. It is an error to finish a
+  closed parser."
+  (declare (type streaming-parser parser))
+  (with-slots (foreign-parser exhausted-p) parser
+    (when exhausted-p
+      (error "Trying to finish an exhausted streaming parser"))
+    (let ((foreign-node (libcmark:parser-finish foreign-parser)))
+      (unwind-protect (parse-tree foreign-node)
+        (libcmark:free-node foreign-node)))))
+
+(defmacro with-streaming-parser ((parser) &body body)
+  "Evaluate the BODY forms with PARSER bound to a new streaming parser
+  instance. The parser will be safely closed and disposed of when the form
+  terminates. Evaluates to the last BODY expression."
+  `(let ((,parser (make-streaming-parser)))
+     (unwind-protect (progn ,@body)
+       (close-streaming-parser ,parser))))
 
 (defun string-octet-length (string)
   "Helper function, returns the length of STRING in UTF-8 encoded bytes"

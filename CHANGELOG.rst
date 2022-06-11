@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+Unreleased
+##########
+
+Added
+=====
+
+- Streaming parser
+
 
 [0.1.0] - 2022-06-10
 ####################

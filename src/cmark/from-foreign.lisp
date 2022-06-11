@@ -119,29 +119,11 @@
 (define-node-parser-method parse-node :cmark-node-link)
 (define-node-parser-method parse-node :cmark-node-image)
 
-(defun node-foreign-to-native (foreign)
-  "Translates one FOREIGN node to a native one. Establishes parent/child
-  relationship. Registers FOREIGN and the new node in the
-  *FOREIGN/NATIVE-NODES* table."
-  (declare (type cffi:foreign-pointer foreign))
-  (let* ((type (libcmark:node-get-type foreign))
-         (node (parse-node foreign type))
-         (foreign-parent (libcmark:node-parent foreign))
-         (native-parent (gethash (cffi:pointer-address foreign-parent)
-                                 *FOREIGN/NATIVE-NODES*)))
-    (when native-parent
-      (with-slots (parent) node
-        (setf parent native-parent))
-      (with-slots (children) native-parent
-        (setf children (nconc children (list node)))))
-    (setf (gethash (cffi:pointer-address foreign) *foreign/native-nodes*) node)
-    node))
-
 (defun parse-tree (foreign)
   "Parses the entire FOREIGN tree into a native tree."
   (declare (type cffi:foreign-pointer foreign))
   (let ((*FOREIGN/NATIVE-NODES* (make-hash-table)))
-    (let ((root (node-foreign-to-native foreign)))
+    (let ((root (node-from-foreign foreign)))
       (let ((iterator (libcmark:make-iterator foreign)))
         (unwind-protect
             (progn
@@ -155,6 +137,24 @@
                   ((eq event :cmark-event-done) root)
                 ;; Called for side effects only
                 (when (eq event :cmark-event-enter)
-                  (node-foreign-to-native node))
+                  (node-from-foreign node))
                 (libcmark:iterator-next iterator)))
           (libcmark:free-iterator iterator))))))
+
+(defun node-from-foreign (foreign)
+  "Helper function, translates one FOREIGN node to a native one. Establishes
+  parent/child relationship."
+  ; Registers FOREIGN and the new node in the *FOREIGN/NATIVE-NODES* table.
+  (declare (type cffi:foreign-pointer foreign))
+  (let* ((type (libcmark:node-get-type foreign))
+         (node (parse-node foreign type))
+         (foreign-parent (libcmark:node-parent foreign))
+         (native-parent (gethash (cffi:pointer-address foreign-parent)
+                                 *FOREIGN/NATIVE-NODES*)))
+    (when native-parent
+      (with-slots (parent) node
+        (setf parent native-parent))
+      (with-slots (children) native-parent
+        (setf children (nconc children (list node)))))
+    (setf (gethash (cffi:pointer-address foreign) *foreign/native-nodes*) node)
+    (the node node)))
