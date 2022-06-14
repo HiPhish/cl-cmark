@@ -74,7 +74,7 @@ This produces the following output:
          TEXT-NODE
        TEXT-NODE
 
-At the moment node of the symbols in the `CMARK` package are exported, but this
+At the moment none of the symbols in the `CMARK` package are exported, but this
 will be fixed before the 1.0 release.
 
 
