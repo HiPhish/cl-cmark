@@ -38,6 +38,46 @@ loaded without loading the `cmark` system.
 There is no documentation yet. The documentation will be written for the 1.0 release when
 the API stabilises. In the meantime you can read the docstrings.
 
+Example
+=======
+
+Let us parse a small CommonMark document and print the node tree.
+
+.. code-block:: lisp
+
+   (defpackage #:cmark-user
+     (:use #:cl #:cmark))
+   (in-package #:cmark-user)
+
+   (defvar *document-tree* (cmark::parse-document "Hello *world*!")
+     "Parse the document into a tree of nodes")
+
+   (defun print-node (node &optional (level 0))
+     "Recursively print each node and its children at progressively deeper
+     levels"
+     (format t "~&~A~A"
+             (make-string (* 2 level) :initial-element #\Space)
+             (class-name (class-of node)))
+     (dolist (child (cmark::node-children node))
+       (print-node child (1+ level))))
+
+   (print-node *DOCUMENT-TREE*)
+
+This produces the following output:
+
+.. code-block::
+
+   DOCUMENT-NODE
+     PARAGRAPH-NODE
+       TEXT-NODE
+       EMPH-NODE
+         TEXT-NODE
+       TEXT-NODE
+
+At the moment node of the symbols in the `CMARK` package are exported, but this
+will be fixed before the 1.0 release.
+
+
 
 Roadmap
 #######
