@@ -4,43 +4,34 @@
 ;;; NOTE: CFFI gives us conversion between native strings and UTF-8 encoded
 ;;; foreign strings for free
 
-(defun parse-document (document)
+(defun parse-document (document &key (smart nil))
   "Parses a CommonMark DOOCUMENT string and returns the root node of the parsed
   document tree."
   (declare (type string document))
   ;; Call into the C library
-  ;; TODO: options!
   (let* ((length (string-octet-length document))
-         (root (libcmark:parse-document document length libcmark:+cmark-opt-default+)))
+         (opt (logior libcmark:+cmark-opt-default+
+                      (if smart libcmark:+cmark-opt-smart+ 0)))
+         (root (libcmark:parse-document document length opt)))
     (unwind-protect
         (parse-tree root)
       (libcmark:free-node root))))
-
-;;; TODO: Do we really want this? It cannot be built on top of PARSE-FILE since
-;;; a Common Lisp FILE-STREAM and a C FILE are not interchangeable.
-(defun parse-stream (stream)
-  "Parses a UTF-8 encoded CommonMark file STREAM and returns the root node of
-  the parsed document tree."
-  (declare (type file-stream stream)
-           (ignore stream))
-  ;; Call into the C library
-  ;; Needs the string encoded as UTF-8
-  ;; Needs the length of the UTF-8 bytes
-  (error "Not implemented, do not use!"))
 
 (defstruct (streaming-parser (:constructor nil))
   (foreign-parser nil :type (or null cffi:foreign-pointer))
   (exhausted-p nil :type boolean))
 
-(defun make-streaming-parser ()
+(defun make-streaming-parser (&key (smart nil))
   "Creates a new streaming parser object. A streaming parser can be fed the
   CommonMark document piecewise, then once the entire document has been fed to
   it the parser can be finished, which produces the document node tree. It is
   the caller's responsibility to close the stream."
-  (let ((result (make-instance 'streaming-parser)))
+  (let ((result (make-instance 'streaming-parser))
+        (opt (logior libcmark:+cmark-opt-default+
+                     (if smart libcmark:+cmark-opt-smart+ 0))))
     (with-slots (foreign-parser) result
-      (setf foreign-parser (libcmark:make-parser libcmark:+cmark-opt-default+))
-      result)))
+      (setf foreign-parser (libcmark:make-parser opt)))
+    result))
 
 (defun feed-streaming-parser (parser string)
   "Feed a STRING into the streaming PARSER."
@@ -75,13 +66,26 @@
       (unwind-protect (parse-tree foreign-node)
         (libcmark:free-node foreign-node)))))
 
-(defmacro with-streaming-parser ((parser) &body body)
+(defmacro with-streaming-parser ((parser &key (smart nil)) &body body)
   "Evaluate the BODY forms with PARSER bound to a new streaming parser
   instance. The parser will be safely closed and disposed of when the form
   terminates. Evaluates to the last BODY expression."
-  `(let ((,parser (make-streaming-parser)))
+  `(let ((,parser (make-streaming-parser :smart ,smart)))
      (unwind-protect (progn ,@body)
        (close-streaming-parser ,parser))))
+
+;;; TODO: Do we really want this? It cannot be built on top of PARSE-FILE since
+;;; a Common Lisp FILE-STREAM and a C FILE are not interchangeable.
+(defun parse-stream (stream &key (smart nil))
+  "Parses a UTF-8 encoded CommonMark file STREAM and returns the root node of
+  the parsed document tree."
+  (declare (type file-stream stream)
+           (ignore stream)
+           (ignore smart))
+  ;; Call into the C library
+  ;; Needs the string encoded as UTF-8
+  ;; Needs the length of the UTF-8 bytes
+  (error "Not implemented, do not use!"))
 
 (defun string-octet-length (string)
   "Helper function, returns the length of STRING in UTF-8 encoded bytes"

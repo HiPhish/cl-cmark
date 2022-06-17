@@ -102,3 +102,32 @@
   (let ((parser (cmark::make-streaming-parser)))
     (cmark::close-streaming-parser parser)
     (signals error (cmark::finish-streaming-parser parser))))
+
+
+;;; ---------------------------------------------------------------------------
+(def-suite cmark/parsing/smart
+  :description "Respecting the smart text conversion feature; we only test that
+  the featurework, but not how well it works, otherwise we would just be
+  testing the C library."
+  :in cmark/parsing)
+(in-suite cmark/parsing/smart)
+;;; Only test that the feature works at all, don't test how well it works. We
+;;; do not want to do QA for C cmark
+
+(test document-parser-smart
+  "Smart text conversion in a document parser"
+  (let* ((document (cmark::parse-document "Hello \"world\"" :smart t)))
+    (is (string= "Hello “world”"
+                 (cmark::node-literal
+                   (first (cmark::node-children
+                            (first (cmark::node-children document)))))))))
+
+(test streaming-parser-smart
+  "Smart text conversion in a streaming parser"
+  (let ((document (cmark::with-streaming-parser (parser :smart t)
+                    (cmark::feed-streaming-parser parser "Hello \"world\"" )
+                    (cmark::finish-streaming-parser parser))))
+    (is (string= "Hello “world”"
+                 (cmark::node-literal
+                   (first (cmark::node-children
+                            (first (cmark::node-children document)))))))))

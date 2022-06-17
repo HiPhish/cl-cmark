@@ -16,6 +16,8 @@ Added
 =====
 
 - Streaming parser
+- Parser keyword option `:smart` for smart text conversion, e.g. straight
+  double quotes to proper English quotation marks
 
 
 [0.1.0] - 2022-06-10

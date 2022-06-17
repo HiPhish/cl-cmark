@@ -78,7 +78,6 @@ At the moment none of the symbols in the `CMARK` package are exported, but this
 will be fixed before the 1.0 release.
 
 
-
 Roadmap
 #######
 
@@ -88,8 +87,7 @@ to write the manual first because sometimes while writing documentation I find
 that if a part of the API is hard to explain it is also hard to understand.
 Here is a list of the remaining tasks:
 
-- Handle options to parsers
-- File parser
+- File parser or stream parser (not to be confused with streaming parser)
 - The manual
 - Recoverable errors, e.g. if a node needs to be an orphan offer a restart that
   orphans the node
