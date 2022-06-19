@@ -1,0 +1,120 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@settitle Common Lisp CommonMark user manual 
+@c %**end of header
+
+@copying
+This manual is for cl-cmark (version 0.2.0, updated 2022-06-18), which
+implements a CommonMark parser for Common Lisp.
+
+Copyright @copyright{} 2022 Alejandro "HiPhish" Sanchez
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+@end quotation
+@end copying
+
+@titlepage
+@title cl-cmark user manual
+@subtitle for version 0.2.0
+@author Alejandro "HiPhish" Sanchez
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@ifplaintext
+@insertcopying
+@end ifplaintext
+@end titlepage
+
+@contents
+
+@node Top
+@top Common Lisp CommonMark
+
+This is a short sample Texinfo file.
+
+@menu
+* Introduction::  Introduction to cl-cmark
+* Installation::
+* Tutorial::
+* cmark::         The high-level CommonMark parsing library
+* libcmark::      The low-level bindings to the libcmark C library
+* Index::
+@end menu
+
+
+@node Introduction
+@chapter Introduction
+
+The CommonMark project is an effort to create an unambiguous formal
+specification of a Markdown dialect. The cl-cmark project is an effort to
+create a Common Lisp implementation of CommonMark. Is is built on top of the
+official reference implementation, which is written in C. To this end we
+provide two systems:
+
+@enumerate
+@item
+The @code{cmark} system is a high-level system which exposes an idiomatic
+Common Lisp interface for parsing documents and traversing the resulting node
+tree.
+
+@item
+The @code{libcmark} system is a low-level system which provides mostly 1:1
+bindings for the C library @code{libcmark}.
+@end enumerate
+
+Most users should only use the @code{cmark} system; the @code{libcmark} system
+can be used to write one's own high-level system as an alternative to
+@code{cmark} or to extend @code{cmark}.
+
+
+@node Installation
+@chapter Installation
+
+The @code{cmark} system has the following direct dependencies:
+
+@enumerate
+@item @code{libcmark}
+@item @code{cffi}
+@item @code{flex-streams}
+@end enumerate
+
+The @code{libcmark} system has the following direct dependencies:
+
+@enumerate
+@item @code{cffi}
+@item The system library @code{libcmark} must be present at runtime
+@end enumerate
+
+TODO: add Quicklisp instructions once it is in Quicklisp
+
+
+@node Tutorial
+@chapter Tutorial
+
+TODO
+
+
+@node cmark
+@chapter cmark
+
+TODO
+
+
+@node libcmark
+@chapter libcmark
+
+TODO
+
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+@bye
