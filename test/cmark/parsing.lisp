@@ -23,23 +23,23 @@
 (in-suite cmark/parsing/document)
 
 (test parse-empty-document
-  (let ((document (cmark::parse-document "")))
-    (is-true (typep document 'cmark::node))))
+  (let ((document (cmark:parse-document "")))
+    (is-true (typep document 'cmark:node))))
 
 (test parse-nonempty-document
   "Parsing a simple markup-less document"
-  (let* ((document (cmark::parse-document "Hello world"))
-         (paragraph (car (cmark::node-children  document)))
-         (text      (car (cmark::node-children paragraph))))
-    (is (= 1 (length (cmark::node-children  document))))
-    (is (= 1 (length (cmark::node-children paragraph))))
-    (is (zerop (length (cmark::node-children text))))
-    (is (string= "Hello world" (cmark::node-literal text)))))
+  (let* ((document (cmark:parse-document "Hello world"))
+         (paragraph (car (cmark:node-children  document)))
+         (text      (car (cmark:node-children paragraph))))
+    (is (= 1 (length (cmark:node-children  document))))
+    (is (= 1 (length (cmark:node-children paragraph))))
+    (is (zerop (length (cmark:node-children text))))
+    (is (string= "Hello world" (cmark:node-literal text)))))
 
 (test parse-complex-document
   "Parsing an entire document yields a large tree structure"
   (let* ((markdown (load-md-from-file "test/sample.md")))
-    (finishes (cmark::parse-document markdown))))
+    (finishes (cmark:parse-document markdown))))
 
 
 ;;; ---------------------------------------------------------------------------
@@ -50,33 +50,33 @@
 
 (test create-and-close-parser
   "We can create a new parser and close it"
-  (finishes (cmark::close-streaming-parser (cmark::make-streaming-parser))))
+  (finishes (cmark:close-streaming-parser (cmark:make-streaming-parser))))
 
 (test with-parser-context
   "We can call the parser context macro"
   (finishes
-    (cmark::with-streaming-parser (parser)
+    (cmark:with-streaming-parser (parser)
       nil)))
 
 (test parser-context-has-parser-binding
   "We can call the parser context macro"
-  (cmark::with-streaming-parser (parser)
+  (cmark:with-streaming-parser (parser)
     (is (typep parser 'cmark::streaming-parser))))
 
 (test feed-parser
   "We can feed a string to the streaming parser"
-  (cmark::with-streaming-parser (parser)
-    (finishes (cmark::feed-streaming-parser parser "Hello *world*."))))
+  (cmark:with-streaming-parser (parser)
+    (finishes (cmark:feed-streaming-parser parser "Hello *world*."))))
 
 (test finish-parser
   "We can finish the streaming parser"
-  (cmark::with-streaming-parser (parser)
-    (cmark::feed-streaming-parser parser "Hello *world*.")
-    (is (typep (cmark::finish-streaming-parser parser) 'cmark::node))))
+  (cmark:with-streaming-parser (parser)
+    (cmark:feed-streaming-parser parser "Hello *world*.")
+    (is (typep (cmark:finish-streaming-parser parser) 'cmark:node))))
 
 (test open-parser-not-exhausted
   "After closing a parser it is exhausted"
-  (cmark::with-streaming-parser (parser)
+  (cmark:with-streaming-parser (parser)
     (is-false (cmark::streaming-parser-exhausted-p parser))))
 
 (test closed-parser-exhausted

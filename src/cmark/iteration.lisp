@@ -15,10 +15,10 @@
 (defun walk-tree (node callback)
   "Iterate through the (sub)tree at NODE, calling CALLBACK at every event. The
   callback is a function which takes two arguments, the current node and the
-  even type. Its return value is ignored.
+  event type. Its return value is ignored.
 
   Usually the callback would be a generic function that can dispatch on the
-  class of node and type of even, but this is just a suggestion, not a
+  class of node and type of event, but this is just a suggestion, not a
   requirement."
   (declare (type node node))
   (funcall callback node 'enter)
@@ -33,7 +33,11 @@
 (defstruct (iterator (:constructor make-iterator (root)))
   "An iterator will walk through a tree of nodes, starting from a ROOT node,
   returning one node at a time, together with information about whether the
-  node is being entered or exited."
+  node is being entered or exited.
+
+  The iterator is an opaque object, we cannot inspect its state. Instead we
+  need to use the return values of ITERATOR-ADVANCE to get the next pair of
+  node and event."
   (root root :type node)
   (node root :type node)
   (event nil :type (or null node-event)))

@@ -16,7 +16,8 @@
 
 (defun node-next (node &optional (child 0))
   "Returns the next NODE in the tree, or NIL if there is none. The nodes
-  are traverse in a depth-first manner."
+  are traverse in a depth-first manner. The CHILD parameter determines into
+  which child node to descend."
   (declare (type node node)
            (type (integer 0) child))
   (let ((parent (node-parent node))

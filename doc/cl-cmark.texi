@@ -2,6 +2,8 @@
 @c %**start of header
 @settitle Common Lisp CommonMark user manual 
 @c %**end of header
+@documentencoding UTF-8
+@syncodeindex vr fn
 
 @copying
 This manual is for cl-cmark (version 0.2.0, updated 2022-06-18), which
@@ -45,7 +47,8 @@ This is a short sample Texinfo file.
 * Tutorial::
 * cmark::         The high-level CommonMark parsing library
 * libcmark::      The low-level bindings to the libcmark C library
-* Index::
+* Concept index::
+* Symbol index::
 @end menu
 
 
@@ -59,6 +62,7 @@ official reference implementation, which is written in C. To this end we
 provide two systems:
 
 @enumerate
+
 @item
 The @code{cmark} system is a high-level system which exposes an idiomatic
 Common Lisp interface for parsing documents and traversing the resulting node
@@ -67,6 +71,7 @@ tree.
 @item
 The @code{libcmark} system is a low-level system which provides mostly 1:1
 bindings for the C library @code{libcmark}.
+
 @end enumerate
 
 Most users should only use the @code{cmark} system; the @code{libcmark} system
@@ -79,18 +84,22 @@ can be used to write one's own high-level system as an alternative to
 
 The @code{cmark} system has the following direct dependencies:
 
-@enumerate
+@itemize
+
 @item @code{libcmark}
 @item @code{cffi}
 @item @code{flex-streams}
-@end enumerate
+
+@end itemize
 
 The @code{libcmark} system has the following direct dependencies:
 
-@enumerate
+@itemize
+
 @item @code{cffi}
 @item The system library @code{libcmark} must be present at runtime
-@end enumerate
+
+@end itemize
 
 TODO: add Quicklisp instructions once it is in Quicklisp
 
@@ -98,23 +107,1089 @@ TODO: add Quicklisp instructions once it is in Quicklisp
 @node Tutorial
 @chapter Tutorial
 
-TODO
+Let us parse a short CommonMark document to obtain its document tree. I
+encourage readers to follow along with the code on their own machine. First we
+should set up a custom package which uses the @code{cmark} system.
+
+@verbatim
+(asdf:load-system "cmark")
+(defpackage #:cmark-user
+ (:use #:cl #:cmark))
+(in-package #:cmark-user)
+@end verbatim
+
+There are several ways of parsing a document; the easiest is to parse the
+entire document as one large string in on go. Regardless of how you parse the
+document, the result is always the root node of the document tree.
+
+@verbatim
+(defvar *document-tree* (cmark::parse-document "Hello *world*!")
+ "Root node of the parsed document tree")
+@end verbatim
+
+There is no technical distinction between a node and a document tree. I use
+whichever term conveys the meaning better. A document tree always has exactly
+one root node, even if that node has no children of its own (this would be an
+empty document). Let us look into the contents of the root node.
+
+@verbatim
+(describe *document-tree*)
+@end verbatim
+
+The output will vary depending on your Lisp implementation. On mine it looks
+like this:
+
+@verbatim
+#<DOCUMENT-NODE {10034BCF93}>
+  [standard-object]
+
+Slots with :INSTANCE allocation:
+  PARENT                         = NIL
+  CHILDREN                       = (#<CMARK::PARAGRAPH-NODE {10035ECF53}>)
+  USER-DATA                      = #.(SB-SYS:INT-SAP #X00000000)
+  START-LINE                     = 1
+  START-COLUMN                   = 1
+  END-LINE                       = 1
+  END-COLUMN                     = 14
+@end verbatim
+
+We can see that the root node is an orphan (it has no parent), that it spans
+the entire length of the document, and that it has one child node. Let us now
+write a function which will traverse the document tree and print the name of
+each node indented according to its level.
+
+@verbatim
+(defun print-node (node &optional (level 0))
+ "Recursively print each node and its children at progressively deeper
+ levels"
+ (format t "~&~A~A"
+         (make-string (* 2 level) :initial-element #\Space)
+         (class-name (class-of node)))
+ (dolist (child (node-children node))
+   (print-node child (1+ level))))
+@end verbatim
+
+We use the @code{NODE-CHILDREN} getter method to get the list of all child
+nodes. Other than that this function is a regular recursive Lisp function. When
+we now evaluate @samp{(print-node *document-tree*)} we get the following
+output:
+
+@example
+DOCUMENT-NODE
+ PARAGRAPH-NODE
+   TEXT-NODE
+   EMPH-NODE
+     TEXT-NODE
+   TEXT-NODE
+@end example
+
+Now suppose we wanted to add a new paragraph to our document tree. We need to
+create a new paragraph node with a text node as its child. We can create the
+entire subtree and append it to the children of the document node.
+
+@verbatim
+(let ((sub-tree (make-instance
+                  'cmark::paragraph-node
+                  :children (list (make-instance
+                                    'cmark::text-node
+                                    :literal "That's all, folks.")))))
+  (cmark::append-child-node *DOCUMENT-TREE* sub-tree))
+@end verbatim
+
+When we print the document tree again we see that there is now a second
+paragraph.
+
+@example
+DOCUMENT-NODE
+  PARAGRAPH-NODE
+    TEXT-NODE
+    EMPH-NODE
+      TEXT-NODE
+    TEXT-NODE
+  PARAGRAPH-NODE
+    TEXT-NODE
+@end example
 
 
 @node cmark
 @chapter cmark
 
-TODO
+The @code{cmark} system provides all the essential classes, functions and
+methods to parse a CommonMark document into a tree of nodes, manipulate the
+tree, and parse it.
+
+@menu
+* Parsing::            Parsing a document into a tree
+* Nodes::              Building blocks of the document tree
+* Tree manipulation::  Altering the structure of tree
+* Tree traversal::     Navigating through the tree
+@end menu
+
+@node Parsing
+@cindex Parsing CommonMark documents
+@section Parsing
+
+Parsing is the act of taking some source of text (such as a string), reading
+its input and producing a tree of document nodes. Parsing can be done either in
+one expression, or through the use of some ``parser'' object which we feed the
+document piecewise to. Either way, the result is a single node which is the
+root of the document tree.
+
+Documents can be parse in ``smart'' mode. When enabled certain character
+combinations will be replaced by others during parsing:
+
+@enumerate
+
+@item Straight quotes become curly English quotes
+@item Three consecutive ASCII minus characters become one em-dash
+@item Two consecutive ASCII minus characters become one en-dash
+
+@end enumerate
+
+@defun PARSE-DOCUMENT DOCUMENT &KEY (SMART NIL)
+Parses the entire string @var{DOCUMENT}. The string must be a valid CommonMark
+document, you cannot only parse one part of a document.
+@end defun
+
+A streaming parser can parse the document piecewise. First we instantiate the
+parser, then we keep feeding it parts of the document. When done we finish the
+parser, which produces the document tree. Finally we need to close the parser
+because the parser is holding on to resources which need to be released.
+
+@example
+;;; Evaluates to the root node of the document
+(let ((parser (make-streaming-parser)))
+  (unwind-protect (progn
+                    (feed-streaming-parser parser "Hello *world*!")
+                    (finish-streaming-parser parser))
+    (close-streaming-parser parser)))
+@end example
+
+There is the convenience macro WITH-STREAMING-PARSER which hides all the above
+boilerplate code.
+
+@defun MAKE-STREAMING-PARSER &KEY (SMART NIL)
+Instantiates and return a new streaming parser object. A streaming parser can
+be fed the document piecewise, so you do not need to keep the entire document
+string in memory.
+
+The parser object is holding on to resources, so it has to be closed explicitly
+with CLOSE-STREAMING-PARSER. Consider using the WITH-STREAMING-PARSER macro
+instead.
+@end defun
+
+@defun CLOSE-STREAMING-PARSER PARSER
+Safely closes the @var{PARSER} by releasing all its resources.
+@end defun
+
+@defun FEED-STREAMING-PARSER PARSER STRING
+Feeds a string of CommonMark code into the @var{PARSER}. The current document
+within the parser is the consecutive concatenation of all strings fed so far.
+
+It is an error to feed into an already closed parser.
+@end defun
+
+@defun FINISH-STREAMING-PARSER PARSER
+Evaluates to the document tree of the text fed so far into the parser
+@var{PARSER}. The parser remains open, meaning you can afterwards feed it more
+text and finish it multiple times.
+
+It is an error to finish an already closed parser.
+@end defun
+
+@defmac WITH-STREAMING-PARSER (PARSER &KEY (SMART NIL)) &BODY BODY ...
+Convenience macro that creates a parser named @var{PARSER} which is valid
+inside the @var{BODY} expressions. When the form terminates the parser is
+safely closed. The entire form evaluates to the last @var{BODY} expression.
+
+@example
+;;; Evaluates to the root node of the document
+(with-streaming-parser (parser)
+  (feed-streaming-parser parser "Hello *world*!")
+  (finish-streaming-parser parser))
+@end example
+@end defmac
+
+@node Nodes
+@cindex Document tree and nodes
+@section Nodes
+
+Nodes are the building blocks of any document tree. Each node is a CLOS object
+whose class determines the role of the node within the document.
+
+@subsection Node classes
+
+Each node can only ever be either a block-level node or an inline node.
+
+The block-level nodes are as follows:
+
+@itemize
+
+@item @code{TEXT-NODE}
+@item @code{SOFTBREAK-NODE}
+@item @code{LINEBREAK-NODE}
+@item @code{CODE-NODE}
+@item @code{HTML-INLINE-NODE}
+@item @code{CUSTOM-INLINE-NODE}
+@item @code{EMPH-NODE}
+@item @code{STRONG-NODE}
+@item @code{LINK-NODE}
+@item @code{IMAGE-NODE}
+
+@end itemize
+
+The inline nodes are as follows:
+
+@itemize
+
+@item @code{TEXT-NODE}
+@item @code{SOFTBREAK-NODE}
+@item @code{LINEBREAK-NODE}
+@item @code{CODE-NODE}
+@item @code{HTML-INLINE-NODE}
+@item @code{CUSTOM-INLINE-NODE}
+@item @code{EMPH-NODE}
+@item @code{STRONG-NODE}
+@item @code{LINK-NODE}
+@item @code{IMAGE-NODE}
+
+@end itemize
+
+Furthermore, each node can only ever be an intermediate node or a leaf node.
+The leaf nodes are as follows:
+
+@itemize
+
+@item @code{HTML-BLOCK-NODE}
+@item @code{THEMATIC-BREAK-NODE}
+@item @code{CODE-BLOCK-NODE}
+@item @code{TEXT-NODE}
+@item @code{SOFTBREAK-NODE}
+@item @code{LINEBREAK-NODE}
+@item @code{CODE-NODE}
+@item @code{HTML-INLINE-NODE}
+
+@end itemize
+
+The following class definition only cover the different node classes briefly.
+Please refer to the built-in documentation for details.
+@deftp {Standard class} NODE PARENT CHILDREN USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
+The parent class of all nodes.
+@end deftp
+
+@deftp {Standard class} DOCUMENT-NODE
+The root node of the document.
+@end deftp
+
+@deftp {Standard class} BLOCK-QUOTE-NODE 
+A quotation block node.
+@end deftp
+
+@deftp {Standard class} LIST-NODE TYPE DELIM START TIGHTP
+A list, can be ordered or unordered.
+@end deftp
+
+@deftp {Standard class} ITEM-NODE 
+A list item.
+@end deftp
+
+@deftp {Standard class} CODE-BLOCK-NODE FENCE-INFO LITERAL
+A block of code, regardless of whether it is a fenced code block or an indented one.
+@end deftp
+
+@deftp {Standard class} HTML-BLOCK-NODE LITERAL
+Block-level embedded HTML code.
+@end deftp
+
+@deftp {Standard class} CUSTOM-BLOCK-NODE ON-ENTER ON-EXIT
+A user-defined node which produces custom text.
+@end deftp
+
+@deftp {Standard class} PARAGRAPH-NODE 
+A paragraph of the document.
+@end deftp
+
+@deftp {Standard class} HEADING-NODE LEVEL
+A heading with variable level.
+@end deftp
+
+@deftp {Standard class} THEMATIC-BREAK-NODE 
+Represents a thematic break within the content of the document.
+@end deftp
+
+@deftp {Standard class} TEXT-NODE LITERAL
+Plain text content.
+@end deftp
+
+@deftp {Standard class} SOFTBREAK-NODE 
+A line break which may be rendered differently depending on the rendering options.
+@end deftp
+
+@deftp {Standard class} LINEBREAK-NODE 
+A hard line break which does not terminate the current block level element.
+@end deftp
+
+@deftp {Standard class} CODE-NODE LITERAL
+Inline verbatim code.
+@end deftp
+
+@deftp {Standard class} HTML-INLINE-NODE LITERAL
+Inline embedded HTML code.
+@end deftp
+
+@deftp {Standard class} CUSTOM-INLINE-NODE ON-ENTER ON-EXIT
+A user-defined node which produces custom text.
+@end deftp
+
+@deftp {Standard class} EMPH-NODE 
+Container for emphatic text.
+@end deftp
+
+@deftp {Standard class} STRONG-NODE 
+Container for strong text.
+@end deftp
+
+@deftp {Standard class} LINK-NODE URL TITLE
+Hyperlink with target URL and title.
+@end deftp
+
+@deftp {Standard class} IMAGE-NODE URL TITLE
+Hyperlink with target URL and alt-text.
+@end deftp
+
+
+@subsection Node predicates
+
+@defun ORPHANP NODE
+Whether @var{NODE} is an orphan, meaning it has no parent node.
+@end defun
+
+@defun CHILDLESSP NODE
+Whether @var{NODE} has no children
+@end defun
+
+@deffn {Generic function} INLINE-NODE-P NODE
+Whether a @var{NODE} is an inline node (as opposed to a block-level node).
+@end deffn
+
+@deffn {Generic function} BLOCK-NODE-P NODE
+Whether a @var{NODE} is a block-level node (as opposed to an inline node).
+@end deffn
+
+@deffn {Generic function} LEAF-NODE-P NODE
+Whether a @var{NODE} is a leaf-type node or not.
+@end deffn
+
+
+@node Tree manipulation
+@cindex Document tree manipulation
+@section Tree manipulation
+
+Tree manipulation means altering the relationship between nodes in tree, such
+as detaching nodes and re-attaching them in other places, or replacing parts of
+the tree entirely.
+
+@defun UNLINK-NODE NODE
+Unlinks a @var{NODE} from its parent, removing it from the node tree. Returns
+the node. The function is idempotent, i.e. unlinking a node without parent does
+nothing.
+@end defun
+
+@defun INSERT-NODE-BEFORE NODE SIBLING
+Inserts @var{SIBLING} into the tree in front of @var{NODE}.
+@end defun
+
+@defun INSERT-NODE-AFTER NODE SIBLING
+Inserts @var{SIBLING} into the tree in front of @var{NODE}.
+@end defun
+
+@defun REPLACE-NODE OLD-NODE NEW-NODE
+Replaces @var{OLD-NODE} with @var{NEW-NODE} and unlinks @var{OLD-NODE} from the
+tree.
+@end defun
+
+@defun PREPEND-CHILD-NODE NODE CHILD
+Insert @var{CHILD} as the first child node of @var{NODE}.
+@end defun
+
+@defun APPEND-CHILD-NODE NODE CHILD
+Documentation string
+@end defun
+
+@defun CONSOLIDATE-TEXT-NODES ROOT
+Consolidates adjacent text nodes in the tree starting at @var{ROOT}. Adjacent
+nodes of type @var{TEXT-NODE} will be merged into one by concatenating their
+literal text. Only one node will remain in the tree, the other nodes will
+become orphaned. It is undefined which node will remain in the tree.
+@end defun
+
+
+@node Tree traversal
+@cindex Document tree traversal
+@section Tree traversal
+
+Tree traversal is the act of moving along the nodes of the tree. We can move
+vertically (between parent and children) and horizontally (between sibling
+nodes).
+
+@defun NODE-FIRST-CHILD NODE
+Returns the first child of @var{NODE}, or @code{NIL} if @var{NODE} has no
+children.
+@end defun
+
+@defun NODE-LAST-CHILD NODE
+Returns the last child of @var{NODE}, or @code{NIL} if @var{NODE} has no
+children.
+@end defun
+
+@defun NODE-NEXT NODE &OPTIONAL (CHILD 0)
+Returns the next @var{NODE} in the tree, or @code{NIL} if there is none. The
+nodes are traverse in a depth-first manner. The @var{CHILD} parameter
+determines into which child node to descend.
+@end defun
+
+@defun NODE-PREVIOUS NODE
+Returns the previous @var{NODE} in the sequence after @var{NODE}, or @code{NIL}
+if there is none.
+@end defun
+
+@defun NODE-NEXT-SIBLING NODE
+Returns the next sibling @var{NODE}, or @code{NIL} if @var{NODE} is the last
+child.
+@end defun
+
+@defun NODE-PREVIOUS-SIBLING NODE
+Returns the next sibling @var{NODE}, or @code{NIL} if @var{NODE} is the last
+child.
+@end defun
+
+@defun WHICH-CHILD NODE
+Position of @var{NODE} among its siblings, or @code{NIL} if @var{NODE} is an
+orphan.
+@end defun
+
+
+@node Tree iteration
+@cindex Document tree iteration
+@section Tree iteration
+
+Tree iteration lets us walk through the tree nodes in depth-first order,
+starting at some root node. There are two iteration interfaces: a stateless
+interface in which we specify the root and a callback function, and a stateful
+iterator object which can move through the tree.
+
+Either way, whenever we enter a node an @code{ENTER} event is produced and
+whenever we leave a node that is not a leaf node an @code{EXIT} event is
+produced. This lets us implement the visitor pattern in which is perform some
+action, such as outputting and opening or closing HTML tag, when we enter or
+exit a node.
+
+@deftp {Enumeration} NODE-EVENT DONE ENTER EXIT
+The type of node event; their meaning is as follows:
+
+@table @code
+@item ENTER
+The iterator has entered a node
+@item EXIT
+The iterator has exited a node. This event is never raised for leaf nodes.
+@item DONE
+The iterator has successfully completed the traversal.
+@end table
+@end deftp
+
+
+@subsection Stateless iteration
+
+@defun WALK-TREE NODE CALLBACK
+Iterate through the (sub)tree at @var{NODE}, calling @var{CALLBACK} at every
+event. The callback is a function which takes two arguments: the current node
+and the event type. Its return value is ignored.
+
+Usually the callback would be a generic function that can dispatch on the class
+of node and type of event, but this is just a suggestion, not a requirement.
+@end defun
+
+@subsection Stateful iteration
+
+Stateful iteration relies on an iterator object. The user instantiates the
+iterator at a given root node, then keeps advancing the iterator. After each
+advancement the state of the iterator has changed and can be queried by the
+user to perform an appropriate action.
+
+The iterator is an opaque object: we can create a new instance, but we cannot
+view its state. Instead, whenever we advance the iterator we get the next pair
+of node and event.
+
+@defun MAKE-ITERATOR ROOT
+Instantiates a new iterator instance at a given @var{ROOT} node. The iterator
+is initially in an invalid state: its event is @code{NIL}. The iterator needs
+to be advanced once first.
+
+The iterator is an opaque object, we cannot inspect its state. Instead we
+need to use the return values of @code{ITERATOR-ADVANCE} to get the next pair
+of node and event.
+@end defun
+
+@defun ITERATOR-RESET ITERATOR NODE EVENT-TYPE
+Reset the ITERATOR so that the current node node is @var{NODE} and the event
+type is @var{EVENT-TYPE}. The new current node must be a descendant of the root
+node or the root node itself.
+@end defun
+
+@defun ITERATOR-ADVANCE ITERATOR
+Advances the @var{ITERATOR} to the next node/event combination. If the iterator
+is exhausted nothing will happen. Returns the new node and event.
+@end defun
 
 
 @node libcmark
 @chapter libcmark
 
-TODO
+This system is mostly a 1:1 translation from the C API to Common Lisp. See the
+@file{cmark(3)} man page for comparison. Using this system requires knowledge
+of CFFI and how it handles data types.
+
+@menu
+* Simple interface: Libcmark simple interface.
+* Data structures: Libcmark data structures.
+* Custom allocator support: Libcmark custom allocator support.
+* node creation and destruction: Libcmark node creation and destruction.
+* tree traversal: Libcmark tree traversal.
+* iterator: Libcmark iterator.
+* accessors: Libcmark accessors.
+* tree manipulation: Libcmark tree manipulation.
+* parsing: Libcmark parsing.
+* rendering: Libcmark rendering.
+* options: Libcmark options.
+* version information: Libcmark version information.
+@end menu
 
 
-@node Index
-@unnumbered Index
+@node Libcmark simple interface
+@section Libcmark simple interface
 
+@deftypefn {CFFI function} :STRING MARKDOWN-TO-HTML @
+  (:STRING @var{TEXT} :SIZE @var{LEN} :INT @var{OPTIONS} )
+Convert TEXT (assumed to be a UTF-8 encoded string with length LEN) from
+CommonMark Markdown to HTML, returning a null-terminated, UTF-8-encoded string.
+It is the caller's responsibility to free the returned buffer.
+@end deftypefn
+
+@node Libcmark data structures
+@section Libcmark data structures
+
+@deftp {CFFI enumeration} CMARK-NODE-TYPE
+Kind of Markdown node
+@end deftp
+
+@deftp {CFFI enumeration} CMARK-LIST-TYPE
+Kind of Markdown list
+@end deftp
+
+@deftp {CFFI enumeration} CMARK-DELIM-TYPE
+Kind of Markdown delimiter
+@end deftp
+
+
+@node Libcmark custom allocator support
+@section Libcmark custom allocator support
+
+@deftp {C structure} CMARK-MEM @
+  (@var{CALLOC} :POINTER) @
+  (@var{REALLOC} :POINTER) @
+  (@var{FREE} :POINTER)
+Defines the memory allocation functions to be used by CMark when parsing and
+allocating a document tree.
+@end deftp
+
+@deftypefn {CFFI function} {(:POINTER (:STRUCT CMARK-MEM))} DEFAULT-MEM-ALLOCATOR
+Returns a pointer to the default memory allocator.
+@end deftypefn
+
+@node Libcmark node creation and destruction
+@section Libcmark node creation and destruction
+
+@deftypefn {CFFI function} {:POINTER} MAKE-NODE @
+  (CMARK-NODE-TYPE @var{TYPE})
+Creates a new node of type TYPE. Note that the node may have other required
+properties, which it is the caller's responsibility to assign.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} MAKE-NODE-WITH-MEM @
+  (CMARK-NODE-TYPE @var{TYPE}) @
+  ((:POINTER (:STRUCT CMARK-MEM)) @var{MEM})
+Same as MAKE-NODE, but explicitly listing the memory allocator used to allocate
+the node. Note: be sure to use the same allocator for every node in a tree, or
+bad things can happen.
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} FREE-NODE @
+  (:POINTER @var{NODE}))
+Frees the memory allocated for a node and any children.
+@end deftypefn
+
+@node Libcmark tree traversal
+@section Libcmark tree traversal
+
+@deftypefn {CFFI function} {:POINTER} NODE-NEXT @
+  (:POINTER @var{NODE})
+Returns the next node in the sequence after node, or NULL if there is none.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} NODE-PREVIOUS @
+  (:POINTER @var{NODE})
+Returns the previous node in the sequence after node, or NULL if there is none.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} NODE-PARENT @
+  (:POINTER @var{NODE})
+Returns the parent of node, or NULL if there is none.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} NODE-FIRST-CHILD @
+  (:POINTER @var{NODE})
+Returns the first child of node, or NULL if node has no children.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} NODE-LAST-CHILD @
+  (:POINTER @var{NODE})
+Returns the last child of node, or NULL if node has no children.
+@end deftypefn
+
+@node Libcmark iterator
+@section Libcmark iterator
+
+
+@deftp {CFFI enumeration} CMARK-EVENT-TYPE @
+  :CMARK-EVENT-NONE @
+  :CMARK-EVENT-DONE @
+  :CMARK-EVENT-ENTER @
+  :CMARK-EVENT-EXIT
+Kind of cmark iterator event.
+@end deftp
+
+@deftypefn {CFFI function} {:POINTER} MAKE-ITERATOR @
+  (:POINTER @var{ROOT})
+Creates a new iterator starting at ROOT. The current node and event type are
+undefined until ITER-NEXT is called for the first time. The memory
+allocated for the iterator should be released using FREE-ITERATOR when it is
+no longer needed.
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} FREE-ITERATOR @
+  (:POINTER @var{ITER})
+Frees the memory allocated for an iterator.
+@end deftypefn
+
+@deftypefn {CFFI function} {CMARK-EVENT-TYPE} ITERATOR-NEXT @
+  (:POINTER @var{ITERATOR})
+Advances to the next node and returns the event type (CMARK_EVENT_ENTER,
+CMARK_EVENT_EXIT or CMARK_EVENT_DONE).
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} ITERATOR-GET-NODE @
+  (:POINTER @var{ITERATOR})
+Returns the current node.
+@end deftypefn
+
+@deftypefn {CFFI function} {CMARK-EVENT-TYPE} ITERATOR-GET-EVENT-TYPE @
+  (:POINTER @var{ITERATOR})
+Returns the current event type.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} ITERATOR-GET-ROOT @
+  (:POINTER @var{ITERATOR})
+Returns the root node.
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} ITERATOR-RESET @
+  (:POINTER @var{ITERATOR}) @
+  (:POINTER @var{CURRENT-NODE}) @
+  (CMARK-EVENT-TYPE @var{EVENT-TYPE})
+Resets the ITERATOR so that the current node is CURRENT-NODE and the event
+type is EVENT-TYPE. The new current node must be a descendant of the root
+node or the root node itself."
+@end deftypefn
+
+
+@node Libcmark accessors
+@section Libcmark accessors
+
+@deftypefn {CFFI function} {:POINTER} NODE-GET-USER-DATA @
+  (:POINTER @var{NODE})
+Returns the user data of node.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-USER-DATA @
+  (:POINTER @var{NODE}) @
+  (:POINTER @var{USER-DATA})
+Sets arbitrary user data for node. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {CMARK-NODE-TYPE} NODE-GET-TYPE @
+  (:POINTER @var{NODE})
+Returns the type of node, or CMARK_NODE_NONE on error.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-TYPE-STRING @
+  (:POINTER @var{NODE})
+Like NODE-GET-TYPE, but returns a string representation of the type, or "<unknown>".
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-LITERAL @
+  (:POINTER @var{NODE})
+Returns the string contents of NODE, or an empty string if none is set. Returns
+NULL if called on a node that does not have string content.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-LITERAL @
+  (:POINTER @var{NODE}) @
+  (:STRING @var{CONTENT})
+Sets the string CONTENTS of NODE. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-HEADING-LEVEL @
+  (:POINTER @var{NODE})
+Returns the heading level of NODE, or 0 if node is not a heading.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-HEADING-LEVEL @
+  (:POINTER @var{NODE})
+  (:INT @var{LEVEL})
+Sets the heading LEVEL of NODE, returning 1 on success and 0 on error.
+@end deftypefn
+
+@deftypefn {CFFI function} {CMARK-LIST-TYPE} NODE-GET-LIST-TYPE @
+  (:POINTER @var{NODE})
+Returns the list type of NODE, or :CMARK_NO_LIST if node is not a list.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-LIST-TYPE @
+  (node :pointer) @
+  (CMARK-LIST-TYPE @var{TYPE})
+Sets the list type of node, returning 1 on success and 0 on error.
+@end deftypefn
+
+@deftypefn {CFFI function} {CMARK-DELIM-TYPE} NODE-GET-LIST-DELIM @
+  (:POINTER @var{NODE})
+Returns the list delimiter type of NODE, or CMARK-NO-DELIM if node is not a
+list.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-LIST-DELIM @
+  (:POINTER @var{NODE}) @
+  (CMARK-DELIM-TYPE @var{DELIM})
+Sets the list delimiter TYPE of NODE, returning 1 on success and 0 on error.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-LIST-START @
+  (:POINTER @var{NODE})
+Returns starting number of NODE, if it is an ordered list, otherwise 0.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-LIST-START @
+  (:POINTER @var{NODE}) @
+  (:INT @var{START})
+Sets STARTing number of NODE, if it is an ordered list.  Returns 1 on success,
+0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-LIST-TIGHT @
+  (:POINTER @var{NODE})
+Returns 1 if NODE is a tight list, 0 otherwise.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-LIST-TIGHT @
+  (:POINTER @var{NODE}) @
+  (:INT @var{TIGHT})
+Sets the \"TIGHTness\" of a list. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-FENCE-INFO @
+  (:POINTER @var{NODE})
+Returns the info string from a fenced code block.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-FENCE-INFO @
+  (:POINTER @var{NODE}) @
+  (:STRING @var{INFO})
+Sets the info string in a fenced code block, returning 1 on success and; 0 on
+failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-URL @
+  (:POINTER @var{NODE})
+Returns the URL of a link or image NODE, or an empty string if no URL is set.
+Returns NULL if called on a node that is not a link or image.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-URL @
+  (:POINTER @var{NODE})
+  (:STRING @var{URL})
+Sets the URL of a link or image NODE. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} NODE-GET-TITLE @
+  (:POINTER) @var{NODE})
+Returns the title of a link or image NODE, or an empty string if no title is
+set. Returns NULL if called on a node that is not a link or image.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-TITLE @
+  (:POINTER @var{NODE}) @
+  (:STRING @var{TITLE})
+Sets the TITLE of a link or image NODE. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-ON-ENTER @
+  (:POINTER) @var{NODE})
+Returns the literal \"on enter\" text for a custom NODE, or an empty string if
+no on_enter is set. Returns NULL if called on a non-custom node.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-ON-ENTER @
+  (:POINTER @var{NODE}) @
+  (:STRING @var{ON-ENTER})
+Sets the literal text to render ON-ENTER for a custom NODE.  Any children of
+the node will be rendered after this text. Returns 1 on success 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} NODE-GET-ON-EXIT @
+  (:POINTER @var{NODE})
+Returns the literal \"on exit\" text for a custom node, or an empty string if
+no on_exit is set. Returns NULL if called on a non-custom node.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-SET-ON-EXIT @
+  (:POINTER @var{NODE}) @
+  (:STRING @var{ON-EXIT})
+Sets the literal text to render ON-EXIT for a custom NODE.  Any children of the
+node will be rendered before this text. Returns 1 on success 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-START-LINE @
+  (:POINTER) @var{NODE})
+Returns the line on which NODE begins.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-START-COLUMN @
+  (:POINTER @var{NODE})
+Returns the column at which NODE begins.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-END-LINE @
+  (:POINTER @var{NODE})
+Returns the line on which NODE ends.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-GET-END-COLUMN @
+  (:POINTER @var{NODE})
+Returns the column at which NODE ends.
+@end deftypefn
+
+@node Libcmark tree manipulation
+@section Libcmark tree manipulation
+
+@deftypefn {CFFI function} {:VOID} NODE-UNLINK @
+  (:POINTER @var{NODE})
+Unlinks a NODE, removing it from the tree, but not freeing its memory. (Use FREE-NODE for that.)
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-INSERT-BEFORE @
+  (:POINTER @var{SIBLING}) @
+  (:POINTER @var{NODE})
+Inserts sibling before NODE. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-INSERT-AFTER @
+  (:POINTER @var{NODE}) @
+  (:POINTER @var{SIBLING})
+Inserts sibling after NODE. Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-REPLACE @
+  (:POINTER @var{OLD-NODE}) @
+  (:POINTER @var{NEW-NODE})
+Replaces OLD-NODE with NEW-NODE and unlinks oldnode (but does not free its
+memory). Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-PREPEND-CHILD @
+  (:POINTER @var{NODE}) @
+  (:POINTER @var{CHILD})
+Adds CHILD to the beginning of the children of NODE.  Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:INT} NODE-APPEND-CHILD @
+  (:POINTER @var{NODE})
+  (:POINTER @var{CHILD})
+Adds CHILD to the end of the children of NODE.  Returns 1 on success, 0 on failure.
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} CONSOLIDATE-TEXT-NODES @
+  (:POINTER) @var{ROOT})
+Consolidates adjacent text nodes.
+@end deftypefn
+
+
+@node Libcmark parsing
+@section Libcmark parsing
+
+@deftypefn {CFFI function} {:POINTER} MAKE-PARSER @
+  (:INT @var{OPTIONS})
+Creates a new parser object.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} MAKE-PARSER-WITH-MEM @
+  (:INT @var{OPTIONS}) @
+  ((:POINTER (:STRUCT CMARK-MEM)) @var{MEM})
+Creates a new parser object with the given MEMory allocator
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} FREE-PARSER @
+  (:POINTER @var{PARSER})
+Frees memory allocated for a parser object.
+@end deftypefn
+
+@deftypefn {CFFI function} {:VOID} PARSER-FEED @
+  (:POINTER @var{PARSER}) @
+  (:STRING @var{BUFFER}) @
+  (:SIZE @var{LEN})
+Feeds a STRING of length LEN to parser.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} PARSER-FINISH @
+  (:POINTER @var{PARSER})
+Finish parsing and return a pointer to a tree of nodes.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} PARSE-DOCUMENT @
+  (:STRING @var{BUFFER}) @
+  (:SIZE @var{LEN}) @
+  (:INT @var{OPTIONS})
+Parse a CommonMark document in BUFFER of length LEN.  Returns a pointer to a
+tree of nodes. The memory allocated for the node tree should be released using
+cmark_node_free when it is no longer needed.
+@end deftypefn
+
+@deftypefn {CFFI function} {:POINTER} PARSE-FILE @
+  (:POINTER @var{FILE}) @
+  (:INT @var{OPTIONS})
+Parse a CommonMark document in file FILE, returning a pointer to a tree of
+nodes. The memory allocated for the node tree should be released using
+cmark_node_free when it is no longer needed.
+@end deftypefn
+
+
+@node Libcmark rendering
+@section Libcmark rendering
+
+@deftypefn {CFFI function} {:STRING} RENDER-XML @
+  (:POINTER @var{ROOT}) @
+  (:INT @var{OPTIONS})
+Render a node tree as XML. It is the caller's responsibility to free the returned buffer.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} RENDER-HTML @
+  (:POINTER @var{ROOT}) @
+  (:INT @var{OPTIONS})
+Render a node tree as an HTML fragment. It is up to the user to add an
+appropriate header and footer. It is the caller's responsibility to free the
+returned buffer.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} RENDER-MAN @
+  (:POINTER @var{ROOT}) @
+  (:INT @var{OPTIONS}) @
+  (:INT @var{WIDTH})
+Render a node tree as a groff man page, without the header. It is the caller's
+responsibility to free the returned buffer.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} RENDER-COMMONMARK @
+  (:POINTER @var{ROOT}) @
+  (:INT @var{OPTIONS}) @
+  (:INT @var{WIDTH})
+Render a node tree as a commonmark document. It is the caller's responsibility to free the returned buffer.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} RENDER-LATEX @
+  (:POINTER @var{ROOT}) @
+  (:INT @var{OPTIONS}) @
+  (:INT @var{WIDTH})
+Render a node tree as a LaTeX document. It is the caller's responsibility to free the returned buffer.
+@end deftypefn
+
+
+@node Libcmark options
+@section Libcmark options
+
+Options are integers which need to be bitwise @code{OR}ed together.
+
+@defvr Constant +CMARK-OPT-DEFAULT+
+Default options.
+@end defvr
+
+@subsection Options affecting rendering
+
+@defvr Constant +CMARK-OPT-SOURCEPOS+
+Include a data-sourcepos attribute on all block elements.
+@end defvr
+
+@defvr Constant +CMARK-OPT-HARDBREAKS+
+Render softbreak elements as hard line breaks.
+@end defvr
+
+@defvr Constant +CMARK-OPT-SAFE+
+@var{+CMARK-OPT-SAFE+} is defined here for API compatibility, but it no longer
+has any effect. "Safe" mode is now the default: set @var{+CMARK-OPT-UNSAFE+} to
+disable it.
+@end defvr
+
+@subsection Options affecting parsing
+
+@defvr Constant +CMARK-OPT-NORMALIZE+
+Legacy option (no effect).
+@end defvr
+
+@defvr Constant +CMARK-OPT-VALIDATE-UTF8+
+Validate UTF-8 in the input before parsing, replacing illegal sequences with
+the replacement character @code{U+FFFD}.
+@end defvr
+
+@defvr Constant +CMARK-OPT-SMART+
+Convert straight quotes to curly, @code{---} to em dashes, @code{--} to en dashes.
+@end defvr
+
+
+@node Libcmark version information
+@section Libcmark version information
+
+@deftypefn {CFFI function} {:INT} VERSION
+The library version as integer for runtime checks.
+
+@itemize @bullet
+
+@item Bits 16-23 contain the major version.
+@item Bits 8-15 contain the minor version.
+@item Bits 0-7 contain the patchlevel.
+
+@end itemize
+
+In hexadecimal format, the number 0x010203 represents version 1.2.3.
+@end deftypefn
+
+@deftypefn {CFFI function} {:STRING} VERSION-STRING
+The library version string for runtime checks.
+@end deftypefn
+
+
+@node Symbol index
+@appendix Symbol index
+@printindex fn
+
+@node Concept index
+@appendix Concept index
 @printindex cp
+
 @bye

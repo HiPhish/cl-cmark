@@ -34,7 +34,7 @@
       (setf children (nsubstitute new-node old-node children :test #'eq)))))
 
 (defun prepend-child-node (node child)
-  "Documentation string"
+  "Insert CHILD as the first child node of NODE."
   (when (node-parent child)
     (error "Node ~A is not an orphan node." child))
   (setf (slot-value child 'parent) node)
@@ -53,7 +53,7 @@
   "Consolidates adjacent text nodes in the tree starting at ROOT. Adjacent
   nodes of type TEXT-NODE will be merged into one by concatenating their
   literal text. Only one node will remain in the tree, the other nodes will
-  become orphaned. It is undefied which node will remain in the tree."
+  become orphaned. It is undefined which node will remain in the tree."
   (let ((iterator (make-iterator root)))
     (do* ((event (iterator-event iterator) (iterator-event iterator))
           (current  (iterator-node iterator)  (iterator-node iterator))

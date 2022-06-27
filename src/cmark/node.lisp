@@ -21,11 +21,11 @@
 
 (defclass document-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Root node of the entire document"))
 
 (defclass block-quote-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Represents a block quotation."))
 
 (defclass list-node (node)
   ((type :initarg :type :accessor node-list-type :type (member :bullet-list :ordered-list)
@@ -41,92 +41,92 @@
 
 (defclass item-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Represents and item inside a list (bullet or unordered)."))
 
 (defclass code-block-node (node)
   ((fence-info :initarg :fence-info :accessor node-fence-info :type string
                :documentation "Info string from a fenced code block")
    (literal :initarg :literal :accessor node-literal :type (or string null)
             :documentation "Text of the node (might be empty)."))
-  (:documentation ""))
+  (:documentation "A block of code to present verbatim."))
 
 (defclass html-block-node (node)
   ((literal :initarg :literal :accessor node-literal :type (or string null)
             :documentation "Text of the node (might be empty)."))
-  (:documentation ""))
+  (:documentation "Block-level embedded HTML code."))
 
 (defclass custom-block-node (node)
   ((on-enter :initarg :on-enter :accessor node-on-enter :type string
              :documentation "Literal text to render on entering a custom node")
    (on-exit :initarg :on-exit :accessor node-on-exit :type string
             :documentation "Literal text to render on exiting a custom node"))
-  (:documentation ""))
+  (:documentation "A user-defined node which produces custom text."))
 
 (defclass paragraph-node (node)
   ()
-  (:documentation ""))
+  (:documentation "A paragraph of the document."))
 
 (defclass heading-node (node)
   ((level :initarg :level :accessor node-heading-level :type (integer 1 6)
           :documentation "Level of the heading"))
-  (:documentation ""))
+  (:documentation "A heading with variable level."))
 
 (defclass thematic-break-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Represents a thematic break within the content of the document."))
 
 ; /* inline */
 (defclass text-node (node)
   ((literal :initarg :literal :accessor node-literal :type (or string null)
             :documentation "Text of the node (might be empty)."))
-  (:documentation ""))
+  (:documentation "Plain text content."))
 
 (defclass softbreak-node (node)
   ()
-  (:documentation ""))
+  (:documentation "A line break which may be rendered differently depending on the rendering options."))
 
 (defclass linebreak-node (node)
   ()
-  (:documentation ""))
+  (:documentation "A hard line break which does not terminate the current block level element."))
 
 (defclass code-node (node)
   ((literal :initarg :literal :accessor node-literal :type (or string null)
             :documentation "Text of the node (might be empty)."))
-  (:documentation ""))
+  (:documentation "Inline verbatim code."))
 
 (defclass html-inline-node (node)
   ((literal :initarg :literal :accessor node-literal :type (or string null)
             :documentation "Text of the node (might be empty)."))
-  (:documentation ""))
+  (:documentation "Inline embedded HTML code."))
 
 (defclass custom-inline-node (node)
   ((on-enter :initarg :on-enter :accessor node-on-enter :type string
              :documentation "Literal text to render on entering a custom node")
    (on-exit :initarg :on-exit :accessor node-on-exit :type string
             :documentation "Literal text to render on exiting a custom node"))
-  (:documentation ""))
+  (:documentation "A user-defined node which produces custom text."))
 
 (defclass emph-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Container for emphatic text."))
 
 (defclass strong-node (node)
   ()
-  (:documentation ""))
+  (:documentation "Container for strong text."))
 
 (defclass link-node (node)
   ((url :initarg :url :accessor node-url :type string
         :documentation "URL of a link node")
    (title :initarg :title :accessor node-title :type string
           :documentation "Title of the node (empty if there is no title)"))
-  (:documentation ""))
+  (:documentation "Hyperlink with target URL and title."))
 
 (defclass image-node (node)
   ((url :initarg :url :accessor node-url :type string
         :documentation "URL of an image node")
    (title :initarg :title :accessor node-title :type string
           :documentation "Title of the node (empty if there is no title)"))
-  (:documentation ""))
+  (:documentation "Hyperlink with target URL and alt-text."))
 
 (defun orphanp (node)
   "Whether NODE is an orphan, meaning it has no parent node."
@@ -140,7 +140,7 @@
 
 (defgeneric inline-node-p (node)
   (:documentation
-  "Whether a node is an inline node (as opposed to a block node).")
+  "Whether a node is an inline node (as opposed to a block-level node).")
   (:method ((node               node)) nil)
   (:method ((node          text-node))   t)
   (:method ((node     softbreak-node))   t)
@@ -155,7 +155,7 @@
 
 (defgeneric block-node-p (node)
   (:documentation
-  "Whether a node is a block node (as opposed to an inline node).")
+  "Whether a node is a block-level node (as opposed to an inline node).")
   (:method ((node                node)) nil)
   (:method ((node       document-node))   t)
   (:method ((node    block-quote-node))   t)
@@ -167,3 +167,16 @@
   (:method ((node      paragraph-node))   t)
   (:method ((node        heading-node))   t)
   (:method ((node thematic-break-node))   t))
+
+(defgeneric leaf-node-p (node)
+  (:documentation
+   "Whether a node is a leaf-type node or not.")
+  (:method ((node                node)) nil)
+  (:method ((node     html-block-node))   t)
+  (:method ((node thematic-break-node))   t)
+  (:method ((node     code-block-node))   t)
+  (:method ((node           text-node))   t)
+  (:method ((node      softbreak-node))   t)
+  (:method ((node      linebreak-node))   t)
+  (:method ((node           code-node))   t)
+  (:method ((node    html-inline-node))   t))

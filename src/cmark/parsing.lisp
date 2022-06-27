@@ -4,6 +4,7 @@
 ;;; NOTE: CFFI gives us conversion between native strings and UTF-8 encoded
 ;;; foreign strings for free
 
+;;; FIXME: Perhaps PARSE-STRING would be a better name?
 (defun parse-document (document &key (smart nil))
   "Parses a CommonMark DOOCUMENT string and returns the root node of the parsed
   document tree."
