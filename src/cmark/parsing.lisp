@@ -75,18 +75,21 @@
      (unwind-protect (progn ,@body)
        (close-streaming-parser ,parser))))
 
-;;; TODO: Do we really want this? It cannot be built on top of PARSE-FILE since
-;;; a Common Lisp FILE-STREAM and a C FILE are not interchangeable.
-(defun parse-stream (stream &key (smart nil))
-  "Parses a UTF-8 encoded CommonMark file STREAM and returns the root node of
-  the parsed document tree."
-  (declare (type file-stream stream)
-           (ignore stream)
-           (ignore smart))
-  ;; Call into the C library
-  ;; Needs the string encoded as UTF-8
-  ;; Needs the length of the UTF-8 bytes
-  (error "Not implemented, do not use!"))
+(defun parse-stream (input &key (smart nil) (buffer-size 1024))
+  "Parses an input stream stream until the end of the stream is encountered,
+  returns the root node of the parsed document tree. The optional :BUFFER-SIZE
+  parameter determines how many characters are read at a time."
+  (declare (type stream input)
+           (type (integer 1) buffer-size))
+  (with-streaming-parser (parser :smart smart)
+    (let ((buffer (make-string buffer-size)))
+      (do ((chars-read (read-sequence buffer input)
+                       (read-sequence buffer input)))
+          ((< chars-read buffer-size)
+           (progn
+             (feed-streaming-parser parser (subseq buffer 0 chars-read))
+             (finish-streaming-parser parser)))
+        (feed-streaming-parser parser buffer)))))
 
 (defun string-octet-length (string)
   "Helper function, returns the length of STRING in UTF-8 encoded bytes"

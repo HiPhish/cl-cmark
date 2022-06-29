@@ -4,6 +4,7 @@
   (:export 
     ;; Parsing
     parse-document
+    parse-stream
     make-streaming-parser
     feed-streaming-parser
     close-streaming-parser

@@ -131,3 +131,34 @@
                  (cmark::node-literal
                    (first (cmark::node-children
                             (first (cmark::node-children document)))))))))
+
+
+;;; ---------------------------------------------------------------------------
+(def-suite cmark/parsing/stream
+  :description "Parsing an input stream"
+  :in cmark/parsing)
+(in-suite cmark/parsing/stream)
+
+(test parse-empty-stream
+  "Parses an empty stream into an empty document."
+  (let ((result (with-input-from-string (s "")
+                  (parse-stream s))))
+    (is-false (node-children result))))
+
+(test parse-non-empty-stream
+  "A non-empty document does have children."
+  (let ((result (with-input-from-string (s "Hello *world*.")
+                  (parse-stream s))))
+    (is-true (node-children result))))
+
+(test parse-with-small-buffer-size
+  "Parses successfully when buffer is shorter than the stream."
+  (let ((result (with-input-from-string (s "Hello *world*.")
+                  (parse-stream s :buffer-size 3))))
+    (is-true (node-children result))))
+
+(test parse-with-large-buffer-size
+  "Parses successfully when buffer is larger than the stream."
+  (let ((result (with-input-from-string (s "Hello *world*.")
+                  (parse-stream s :buffer-size 300))))
+    (is-true (node-children result))))

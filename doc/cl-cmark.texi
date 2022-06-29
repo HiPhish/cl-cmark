@@ -246,10 +246,35 @@ combinations will be replaced by others during parsing:
 
 @end enumerate
 
+@subsection Parsing an entire string
+
 @defun PARSE-DOCUMENT DOCUMENT &KEY (SMART NIL)
 Parses the entire string @var{DOCUMENT}. The string must be a valid CommonMark
 document, you cannot only parse one part of a document.
 @end defun
+
+@subsection Parsing an input stream
+
+We can parse a finite character input stream. It is import that that the stream
+be finite, otherwise the parser will not know when to stop parsing the document
+and will block indefinitely. If you want control over when to stop parsing
+consider using a streaming parser.
+
+@example
+(with-input-from-string (input "Hello *world*.")
+  (parse-stream input))
+@end example
+
+@defun PARSE-STREAM STREAM (:SMART NIL) (:BUFFER-SIZE 1024)
+Parses an input stream @var{INPUT} until the end of the stream is encountered,
+returns the root node of the parsed document tree. The optional
+@var{:BUFFER-SIZE} parameter determines how many characters are read at a
+time.
+@end defun
+
+
+
+@subsection Parsing a document piecewise
 
 A streaming parser can parse the document piecewise. First we instantiate the
 parser, then we keep feeding it parts of the document. When done we finish the

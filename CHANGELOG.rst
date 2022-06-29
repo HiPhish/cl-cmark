@@ -17,6 +17,7 @@ Added
 =====
 
 - Preliminary manual
+- Stream parser
 - Proper export of symbols in the `cmark` package in accord with the manual
 - Filled in missing docstrings
 - Generic function `cmark:leaf-node-p`
