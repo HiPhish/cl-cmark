@@ -18,6 +18,9 @@
     image-node
     ;; Node accessors
     node-parent node-children node-literal
+    node-list-type node-list-delim node-list-start
+    node-heading-level
+    node-title node-url
     ;; Node predicates
     orphanp childlessp inline-node-p block-node-p leaf-node-p
     ;; Tree traversal
