@@ -13,6 +13,11 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 Unreleased
 ##########
 
+Changed
+=======
+- `LIBCMARK:NODE-GET-TITLE` returns a string instead of a pointer
+
+
 Added
 =====
 

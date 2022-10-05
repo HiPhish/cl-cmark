@@ -97,7 +97,7 @@
   (node :pointer)
   (url :string))
 
-(defcfun ("cmark_node_get_title" node-get-title) :pointer
+(defcfun ("cmark_node_get_title" node-get-title) :string
   "Returns the title of a link or image NODE, or an empty string if no title is
   set. Returns NULL if called on a node that is not a link or image."
   (node :pointer))
