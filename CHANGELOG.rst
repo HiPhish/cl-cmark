@@ -16,6 +16,8 @@ Unreleased
 Changed
 =======
 - `LIBCMARK:NODE-GET-TITLE` returns a string instead of a pointer
+- Type of `CMARK:NODE-LIST-TYPE` is now either `:CMARK-BULLET-LIST` or
+  `:CMARK-ORDERED-LIST`, rather than `:BULLET-LIST` or `:ORDERED-LIST`
 
 
 Added

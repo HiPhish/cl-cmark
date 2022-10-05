@@ -28,12 +28,12 @@
   (:documentation "Represents a block quotation."))
 
 (defclass list-node (node)
-  ((type :initarg :type :accessor node-list-type :type (member :bullet-list :ordered-list)
+  ((type :initarg :type :accessor node-list-type :type (member :cmark-bullet-list :cmark-ordered-list)
          :documentation "The type of list")
    (delim :initarg :delim :accessor node-list-delim :type (member :period :paren)
           :documentation "The delimiter type of the list")
    (start :initarg :start :accessor node-list-start :type (integer 0 *)
-               :documentation "Starting number of the node (zero for unordered lists)")
+          :documentation "Starting number of the node (zero for unordered lists)")
    (tightp :initarg :tightp :accessor node-list-tight-p :type boolean
            :documentation "Whether the node is a tight list"))
   (:documentation
