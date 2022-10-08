@@ -95,13 +95,13 @@
   "Feeding a closed parser raises a condition"
   (let ((parser (cmark::make-streaming-parser)))
     (cmark::close-streaming-parser parser)
-    (signals error (cmark::feed-streaming-parser parser "Hello *world*"))))
+    (signals cmark:parser-exhausted (cmark::feed-streaming-parser parser "Hello *world*"))))
 
 (test finish-closed
   "Finishing a closed parser raises a condition"
   (let ((parser (cmark::make-streaming-parser)))
     (cmark::close-streaming-parser parser)
-    (signals error (cmark::finish-streaming-parser parser))))
+    (signals cmark:parser-exhausted (cmark::finish-streaming-parser parser))))
 
 
 ;;; ---------------------------------------------------------------------------

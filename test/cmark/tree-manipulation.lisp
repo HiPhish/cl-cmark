@@ -54,6 +54,14 @@
     (is (equal (list child1 child2)
                (cmark:node-children parent)))))
 
+(test append-non-orphan
+  "Appending a non-orphan node signals a condition"
+  (let ((child  (make-instance 'cmark:block-quote-node))
+        (parent (make-instance 'cmark:block-quote-node))
+        (root   (make-instance 'cmark:document-node)))
+    (cmark:append-child-node parent child)
+    (signals cmark:child-node (cmark:append-child-node root child))))
+
 
 ;;; ---------------------------------------------------------------------------
 (def-suite cmark/tree-manipulation/insert-before-node
@@ -75,7 +83,7 @@
   "Inserting a node before an orphan node signals an error"
   (let* ((child  (make-instance 'cmark:block-quote-node))
          (parent (make-instance 'cmark:document-node)))
-    (signals error
+    (signals cmark:orphan-node
       (cmark:insert-node-before parent child))))
 
 (test insert-before-non-orphan-node
@@ -86,7 +94,7 @@
          (parent2 (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
-    (signals error
+    (signals cmark:child-node
       (cmark:insert-node-before child1 child2))))
 
 
@@ -110,7 +118,7 @@
   "Inserting a node after an orphan node signals an error"
   (let* ((child  (make-instance 'cmark:block-quote-node))
          (parent (make-instance 'cmark:document-node)))
-    (signals error
+    (signals cmark:orphan-node
       (cmark:insert-node-after parent child))))
 
 (test insert-after-non-orphan-node
@@ -121,7 +129,7 @@
          (parent2 (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
-    (signals error
+    (signals cmark:child-node
       (cmark:insert-node-after child1 child2))))
 
 

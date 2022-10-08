@@ -223,6 +223,8 @@ tree, and parse it.
 * Nodes::              Building blocks of the document tree
 * Tree manipulation::  Altering the structure of tree
 * Tree traversal::     Navigating through the tree
+* Tree iteration::     Walking over the document tree
+* Conditions::         Types of conditions signalled by functions
 @end menu
 
 @node Parsing
@@ -311,7 +313,8 @@ Safely closes the @var{PARSER} by releasing all its resources.
 Feeds a string of CommonMark code into the @var{PARSER}. The current document
 within the parser is the consecutive concatenation of all strings fed so far.
 
-It is an error to feed into an already closed parser.
+It is an error to feed into an already closed parser, signals
+@code{PARSER-EXHAUSTED}.
 @end defun
 
 @defun FINISH-STREAMING-PARSER PARSER
@@ -319,7 +322,8 @@ Evaluates to the document tree of the text fed so far into the parser
 @var{PARSER}. The parser remains open, meaning you can afterwards feed it more
 text and finish it multiple times.
 
-It is an error to finish an already closed parser.
+It is an error to finish an already closed parser, signals
+@code{PARSER-EXHAUSTED}.
 @end defun
 
 @defmac WITH-STREAMING-PARSER (PARSER &KEY (SMART NIL)) &BODY BODY ...
@@ -398,6 +402,7 @@ The leaf nodes are as follows:
 
 The following class definition only cover the different node classes briefly.
 Please refer to the built-in documentation for details.
+
 @deftp {Standard class} NODE PARENT CHILDREN USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
 The parent class of all nodes.
 @end deftp
@@ -521,24 +526,30 @@ nothing.
 @end defun
 
 @defun INSERT-NODE-BEFORE NODE SIBLING
-Inserts @var{SIBLING} into the tree in front of @var{NODE}.
+Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
+insert before an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
+is already a child (signals @code{CHILD-NODE}).
 @end defun
 
 @defun INSERT-NODE-AFTER NODE SIBLING
-Inserts @var{SIBLING} into the tree in front of @var{NODE}.
+Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
+insert after an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
+is already a child (signals @code{CHILD-NODE}).
 @end defun
 
 @defun REPLACE-NODE OLD-NODE NEW-NODE
 Replaces @var{OLD-NODE} with @var{NEW-NODE} and unlinks @var{OLD-NODE} from the
-tree.
+tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}.
 @end defun
 
 @defun PREPEND-CHILD-NODE NODE CHILD
-Insert @var{CHILD} as the first child node of @var{NODE}.
+Insert @var{CHILD} as the first child node of @var{NODE}. It is an error to
+prepend a node which is already a child of a node, signals @code{CHILD-NODE.}.
 @end defun
 
 @defun APPEND-CHILD-NODE NODE CHILD
-Documentation string
+Append CHILD as the last child node of NODE. It is an error to append a node
+which is already a child of a node, signals @code{CHILD-NODE}.
 @end defun
 
 @defun CONSOLIDATE-TEXT-NODES ROOT
@@ -665,6 +676,26 @@ node or the root node itself.
 Advances the @var{ITERATOR} to the next node/event combination. If the iterator
 is exhausted nothing will happen. Returns the new node and event.
 @end defun
+
+
+@node Conditions
+@cindex Conditions signalled
+@section Conditions
+
+The following condition types are defined and can be signalled by various functions.
+
+@deftp {Error} PARSER-EXHAUSTED (@code{:PARSER} @var{PARSER}) (@code{:STRING} (@var{STRING} @code{NIL}))
+Trying to manipulate an exhausted streaming parser. The @var{STRING} contains
+the string to parse or @code{NIL} if not applicable.
+@end deftp
+
+@deftp {Error} ORPHAN-NODE (@code{:NODE} @var{NODE})
+Orphan node in a context where a child node is expected.
+@end deftp
+
+@deftp {Error} CHILD-NODE (@code{:NODE} @var{NODE})
+Child node in a context where an orphan node is expected.
+@end deftp
 
 
 @node libcmark

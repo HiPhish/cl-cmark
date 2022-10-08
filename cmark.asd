@@ -8,6 +8,7 @@
   :components ((:module "src"
                 :components ((:module "cmark"
                               :components ((:file "package")
+                                           (:file "conditions")
                                            (:file "node")
                                            (:file "iteration")
                                            (:file "tree-manipulation")

@@ -15,11 +15,15 @@
     node))
 
 (defun insert-node-before (node sibling)
-  "Inserts SIBLING into the tree in front of NODE."
+  "Inserts SIBLING into the tree in front of NODE. It is an error to insert
+  before an orphan (signals ORPHAN-NODE), or to insert a node which is already
+  a child (signals CHILD-NODE)."
   (insert-node node sibling #'insert-before))
 
 (defun insert-node-after (node sibling)
-  "Inserts SIBLING into the tree in front of NODE."
+  "Inserts SIBLING into the tree in front of NODE. It is an error to insert
+  after an orphan (signals ORPHAN-NODE), or to insert a node which is already
+  a child (signals CHILD-NODE)."
   (insert-node node sibling #'insert-after))
 
 (defun replace-node (old-node new-node)
@@ -27,23 +31,31 @@
   (declare (type node new-node old-node))
   (let ((parent (node-parent old-node)))
     (unless parent
-      (error "Old node has no parent node."))
+      (error 'orphan-node :node old-node
+             :format-control "Old node ~A has no parent node."
+             :format-arguments (list old-node)))
     (setf (slot-value new-node 'parent) parent)
     (setf (slot-value old-node 'parent) nil)
     (with-slots (children) parent
       (setf children (nsubstitute new-node old-node children :test #'eq)))))
 
 (defun prepend-child-node (node child)
-  "Insert CHILD as the first child node of NODE."
+  "Insert CHILD as the first child node of NODE. It is an error to prepend a
+  node which is already a child of a node, signals CHILD-NODE."
   (when (node-parent child)
-    (error "Node ~A is not an orphan node." child))
+    (error 'child-node :node child
+           :format-control "Node ~A is not an orphan node."
+           :format-arguments (list child)))
   (setf (slot-value child 'parent) node)
   (push child (slot-value node 'children)))
 
 (defun append-child-node (node child)
-  "Documentation string"
+  "Append CHILD as the last child node of NODE. It is an error to append a node
+  which is already a child of a node, signals CHILD-NODE."
   (when (node-parent child)
-    (error "Node ~A is not an orphan node." child))
+    (error 'child-node :node child
+           :format-control "Node ~A is not an orphan node."
+           :format-arguments (list child)))
   (setf (slot-value child 'parent) node)
   (setf (slot-value node 'children)
         (nconc (slot-value node 'children) (list child))))
@@ -81,9 +93,13 @@
   (declare (type node node sibling))
   (let ((parent (node-parent node)))
     (unless parent
-      (error "Trying to add a sibling to an orphan node"))
+      (error 'orphan-node :node node
+           :format-control "Trying to add a sibling to orphan node ~A"
+           :format-arguments (list node)))
     (when (node-parent sibling)
-      (error "Trying to assign a parent to a non-orphan node"))
+      (error 'child-node :node sibling
+           :format-control "Trying to assign a parent to non-orphan node ~A"
+           :format-arguments (list sibling)))
     (setf (slot-value sibling 'parent) parent)
     (with-slots (children) parent
       (setf children (funcall method

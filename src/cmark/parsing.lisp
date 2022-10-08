@@ -35,12 +35,14 @@
     result))
 
 (defun feed-streaming-parser (parser string)
-  "Feed a STRING into the streaming PARSER."
+  "Feed a STRING into the streaming PARSER. It is an error to feed a closed
+  parser, signals PARSER-EXHAUSTED."
   (declare (type streaming-parser parser)
            (type string string))
   (with-slots (foreign-parser exhausted-p) parser
     (when exhausted-p
-      (error "Trying to feed an exhausted streaming parser"))
+      (error 'parser-exhausted :parser parser :string string
+             :format-control "Trying to feed an exhausted streaming parser"))
     (libcmark:parser-feed foreign-parser string (string-octet-length string))
     nil))
 
@@ -58,11 +60,12 @@
 (defun finish-streaming-parser (parser)
   "Returns the parsed node tree. Does not exhaust the parser, feeding the
   parser or finishing it again is not an error. It is an error to finish a
-  closed parser."
+  closed parser, signals PARSER-EXHAUSTED."
   (declare (type streaming-parser parser))
   (with-slots (foreign-parser exhausted-p) parser
     (when exhausted-p
-      (error "Trying to finish an exhausted streaming parser"))
+      (error 'parser-exhausted :parser parser
+             :format-control "Trying to finish an exhausted streaming parser"))
     (let ((foreign-node (libcmark:parser-finish foreign-parser)))
       (unwind-protect (parse-tree foreign-node)
         (libcmark:free-node foreign-node)))))

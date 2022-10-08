@@ -2,6 +2,8 @@
   (:documentation "High-level interface to libcmark")
   (:use #:cl)
   (:export 
+    ;; Conditions
+    parser-exhausted orphan-node child-node
     ;; Parsing
     parse-document
     parse-stream

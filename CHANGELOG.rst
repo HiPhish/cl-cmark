@@ -18,6 +18,7 @@ Changed
 - `LIBCMARK:NODE-GET-TITLE` returns a string instead of a pointer
 - Type of `CMARK:NODE-LIST-TYPE` is now either `:CMARK-BULLET-LIST` or
   `:CMARK-ORDERED-LIST`, rather than `:BULLET-LIST` or `:ORDERED-LIST`
+- Functions which used to signal `ERROR` now signal a more specific condition
 
 
 Added
@@ -28,6 +29,7 @@ Added
 - Proper export of symbols in the `cmark` package in accord with the manual
 - Filled in missing docstrings
 - Generic function `cmark:leaf-node-p`
+- Conditions `parser-exhausted`, `orphan-node` and `child-node`
 
 
 [0.2.0] - 2022-06-17
