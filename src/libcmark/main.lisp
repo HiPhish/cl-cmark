@@ -2,6 +2,7 @@
 (in-package #:libcmark)
 
 (define-foreign-library libcmark
+  (:darwin (:or "libcmark.so.0.30.2.dylib" "libcmark.dylib"))
   (:unix (:or "libcmark.so.0.30.2" "libcmark.so.0" "libcmark"))
   (:t (:default "libcmark")))
 (use-foreign-library libcmark)
