@@ -4,6 +4,8 @@
   (:export 
     ;; Conditions
     parser-exhausted orphan-node child-node
+    ;; Restarts
+    detach-from-parent
     ;; Parsing
     parse-document
     parse-stream

@@ -185,7 +185,7 @@ DOCUMENT-NODE
 
 Now suppose we wanted to add a new paragraph to our document tree. We need to
 create a new paragraph node with a text node as its child. We can create the
-entire subtree and append it to the children of the document node.
+entire sub-tree and append it to the children of the document node.
 
 @verbatim
 (let ((sub-tree (make-instance
@@ -544,12 +544,26 @@ tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}.
 
 @defun PREPEND-CHILD-NODE NODE CHILD
 Insert @var{CHILD} as the first child node of @var{NODE}. It is an error to
-prepend a node which is already a child of a node, signals @code{CHILD-NODE.}.
+prepend a node which is already a child of a node, signals @code{CHILD-NODE}.
+The following restarts are provided:
+
+@table @code
+@item DETACH-FROM-PARENT
+Detaches @var{CHILD} from its parent and thus from its original tree, then
+resumes the function.
+@end table
 @end defun
 
 @defun APPEND-CHILD-NODE NODE CHILD
 Append CHILD as the last child node of NODE. It is an error to append a node
-which is already a child of a node, signals @code{CHILD-NODE}.
+which is already a child of a node, signals @code{CHILD-NODE}. The following
+restarts are provided:
+
+@table @code
+@item DETACH-FROM-PARENT
+Detaches @var{CHILD} from its parent and thus from its original tree, then
+resumes the function.
+@end table
 @end defun
 
 @defun CONSOLIDATE-TEXT-NODES ROOT

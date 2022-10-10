@@ -10,6 +10,15 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
+Unreleased
+##########
+
+Added
+=====
+- Restart `DETACH-FROM-PARENT` in `APPEND-CHILD-NODE`
+- Restart `DETACH-FROM-PARENT` in `PREPEND-CHILD-NODE`
+
+
 [0.3.0] - 2022-10-08
 ####################
 

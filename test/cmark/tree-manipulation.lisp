@@ -30,6 +30,30 @@
     (is (equal (list child1 child2)
                (cmark:node-children parent)))))
 
+(test prepend-non-orphan
+  "Prepending a non-orphan node signals a condition"
+  (let ((child  (make-instance 'cmark:block-quote-node))
+        (parent (make-instance 'cmark:block-quote-node))
+        (root   (make-instance 'cmark:document-node)))
+    (cmark:prepend-child-node parent child)
+    (signals cmark:child-node (cmark:prepend-child-node root child))))
+
+(test prepend-non-orphan/detach-from-parent
+  "A restart lets us detach the node from its parent"
+  (let ((child  (make-instance 'cmark:block-quote-node))
+        (parent (make-instance 'cmark:block-quote-node))
+        (root   (make-instance 'cmark:document-node)))
+    (cmark:append-child-node parent child)
+    (handler-bind
+        ((cmark:child-node (lambda (c)
+                             (declare (ignore c))
+                             (invoke-restart 'cmark:detach-from-parent))))
+      (cmark:prepend-child-node root child))
+    (is (equal (list child)
+               (cmark:node-children root)))))
+
+
+;;; ---------------------------------------------------------------------------
 (def-suite cmark/tree-manipulation/append-child-node
   :description "Appending a new child node to a parent"
   :in cmark/tree-manipulation)
@@ -61,6 +85,20 @@
         (root   (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent child)
     (signals cmark:child-node (cmark:append-child-node root child))))
+
+(test append-non-orphan/detach-from-parent
+  "A restart lets us detach the node from its parent"
+  (let ((child  (make-instance 'cmark:block-quote-node))
+        (parent (make-instance 'cmark:block-quote-node))
+        (root   (make-instance 'cmark:document-node)))
+    (cmark:append-child-node parent child)
+    (handler-bind
+        ((cmark:child-node (lambda (c)
+                             (declare (ignore c))
+                             (invoke-restart 'cmark:detach-from-parent))))
+      (cmark:append-child-node root child))
+    (is (equal (list child)
+               (cmark:node-children root)))))
 
 
 ;;; ---------------------------------------------------------------------------

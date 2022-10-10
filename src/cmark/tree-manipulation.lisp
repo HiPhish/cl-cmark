@@ -41,21 +41,39 @@
 
 (defun prepend-child-node (node child)
   "Insert CHILD as the first child node of NODE. It is an error to prepend a
-  node which is already a child of a node, signals CHILD-NODE."
-  (when (node-parent child)
-    (error 'child-node :node child
-           :format-control "Node ~A is not an orphan node."
-           :format-arguments (list child)))
+  node which is already a child of a node, signals CHILD-NODE. The following
+  restarts are provided:
+  - DETACH-FROM-PARENT:
+      Detaches CHILD from its parent and thus from its original tree, then
+      resumes the function."
+  (restart-case
+      (when (node-parent child)
+        (error 'child-node :node child
+               :format-control "Node ~A is not an orphan node."
+               :format-arguments (list child)))
+    (detach-from-parent ()
+      :report (lambda (stream)
+                (format stream "Detach node ~A from its parent" child))
+      (unlink-node child)))
   (setf (slot-value child 'parent) node)
   (push child (slot-value node 'children)))
 
 (defun append-child-node (node child)
   "Append CHILD as the last child node of NODE. It is an error to append a node
-  which is already a child of a node, signals CHILD-NODE."
-  (when (node-parent child)
-    (error 'child-node :node child
-           :format-control "Node ~A is not an orphan node."
-           :format-arguments (list child)))
+  which is already a child of a node, signals CHILD-NODE. The following
+  restarts are provided:
+  - DETACH-FROM-PARENT:
+      Detaches CHILD from its parent and thus from its original tree, then
+      resumes the function."
+  (restart-case
+      (when (node-parent child)
+        (error 'child-node :node child
+               :format-control "Node ~A is not an orphan node."
+               :format-arguments (list child)))
+    (detach-from-parent ()
+      :report (lambda (stream)
+                (format stream "Detach node ~A from its parent" child))
+      (unlink-node child)))
   (setf (slot-value child 'parent) node)
   (setf (slot-value node 'children)
         (nconc (slot-value node 'children) (list child))))
