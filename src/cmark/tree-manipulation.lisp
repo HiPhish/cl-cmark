@@ -30,10 +30,35 @@
   "Replaces OLD-NODE with NEW-NODE and unlinks OLD-NODE from the tree."
   (declare (type node new-node old-node))
   (let ((parent (node-parent old-node)))
-    (unless parent
-      (error 'orphan-node :node old-node
-             :format-control "Old node ~A has no parent node."
-             :format-arguments (list old-node)))
+    (restart-case
+        (unless parent
+          (error 'orphan-node :node old-node
+                 :format-control "Old node ~A has no parent node."
+                 :format-arguments (list old-node)))
+      (prepend-to-parent (new-parent)
+        :report (lambda (stream)
+                  (format stream "Append node ~A as the last child of another node" old-node))
+        (progn
+          (setf parent new-parent)
+          (prepend-child-node new-parent old-node)))
+      (append-to-parent (new-parent)
+        :report (lambda (stream)
+                  (format stream "Append node ~A as the last child of another node" old-node))
+        (progn
+          (setf parent new-parent)
+          (append-child-node parent old-node)))
+      (insert-before-sibling (sibling)
+        :report (lambda (stream)
+                  (format stream "Insert node ~A before another node" old-node))
+        (progn
+          (insert-node-before sibling old-node)
+          (setf parent (node-parent sibling))))
+      (insert-after-sibling (sibling)
+        :report (lambda (stream)
+                  (format stream "Insert node ~A after another node" old-node))
+        (progn
+          (insert-node-after sibling old-node)
+          (setf parent (node-parent sibling)))))
     (setf (slot-value new-node 'parent) parent)
     (setf (slot-value old-node 'parent) nil)
     (with-slots (children) parent

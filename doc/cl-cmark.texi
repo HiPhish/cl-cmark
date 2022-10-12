@@ -539,7 +539,26 @@ is already a child (signals @code{CHILD-NODE}).
 
 @defun REPLACE-NODE OLD-NODE NEW-NODE
 Replaces @var{OLD-NODE} with @var{NEW-NODE} and unlinks @var{OLD-NODE} from the
-tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}.
+tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}. The
+following restarts are provided:
+
+@table @asis
+@item @code{APPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{OLD-NODE} to @var{NEW-PARENT} as its last child, then resumes the
+function.
+
+@item @code{PREPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{OLD-NODE} to @var{NEW-PARENT} as its first child, then resumes
+the function.
+
+@item @code{INSERT-BEFORE-SIBLING} (@var{SIBLING})
+Attaches @var{OLD-NODE} to into the tree as the predecessor of @var{SIBLING},
+then resumes the function.
+
+@item @code{INSERT-AFTER-SIBLING} (@var{SIBLING})
+Attaches @var{OLD-NODE} to into the tree as the successor of @var{SIBLING},
+then resumes the function.
+@end table
 @end defun
 
 @defun PREPEND-CHILD-NODE NODE CHILD

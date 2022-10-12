@@ -5,7 +5,8 @@
     ;; Conditions
     parser-exhausted orphan-node child-node
     ;; Restarts
-    detach-from-parent
+    detach-from-parent prepend-to-parent append-to-parent
+    insert-before-sibling  insert-after-sibling
     ;; Parsing
     parse-document
     parse-stream

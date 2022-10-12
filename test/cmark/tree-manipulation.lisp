@@ -211,6 +211,81 @@
     (is (eq parent (cmark:node-parent child2)))
     (is (equal (list child2) (cmark:node-children parent)))))
 
+(test replace-orphan-node
+  "Replacing an orphan node signals an error"
+  (let ((old-node (make-instance 'cmark:block-quote-node))
+        (new-node (make-instance 'cmark:block-quote-node)))
+    (signals cmark:orphan-node
+      (cmark:replace-node old-node new-node))))
+
+(test replace-orphan-node/prepend-to-parent
+  "It is possible to prepend an orphan node to a parent in a restart"
+  (let ((root     (make-instance 'cmark:document-node))
+        (child    (make-instance 'cmark:block-quote-node))
+        (old-node (make-instance 'cmark:block-quote-node))
+        (new-node (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root child)
+    (handler-bind
+        ((cmark:orphan-node
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:prepend-to-parent root))))
+      (cmark:replace-node old-node new-node))
+    (is (equal (list new-node child)
+               (cmark:node-children root)))
+    (is-false (cmark:node-parent old-node))))
+
+(test replace-orphan-node/append-to-parent
+  "It is possible to append an orphan node to a parent in a restart"
+  (let ((root     (make-instance 'cmark:document-node))
+        (child    (make-instance 'cmark:block-quote-node))
+        (old-node (make-instance 'cmark:block-quote-node))
+        (new-node (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root child)
+    (handler-bind
+        ((cmark:orphan-node
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:append-to-parent root))))
+      (cmark:replace-node old-node new-node))
+    (is (equal (list child new-node)
+               (cmark:node-children root)))
+    (is-false (cmark:node-parent old-node))))
+
+(test replace-orphan-node/insert-before-sibling
+  "It is possible to insert an orphan node before another node in a restart"
+  (let ((root     (make-instance 'cmark:document-node))
+        (child    (make-instance 'cmark:block-quote-node))
+        (old-node (make-instance 'cmark:block-quote-node))
+        (new-node (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root child)
+    (handler-bind
+        ((cmark:orphan-node
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-before-sibling child))))
+      (cmark:replace-node old-node new-node))
+    (is (equal (list new-node child)
+               (cmark:node-children root)))
+    (is-false (cmark:node-parent old-node))))
+
+(test replace-orphan-node/insert-after-sibling
+  "It is possible to insert an orphan node after another node in a restart"
+  (let ((root     (make-instance 'cmark:document-node))
+        (child    (make-instance 'cmark:block-quote-node))
+        (old-node (make-instance 'cmark:block-quote-node))
+        (new-node (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root child)
+    (handler-bind
+        ((cmark:orphan-node
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-after-sibling child))))
+      (cmark:replace-node old-node new-node))
+    (is (equal (list child new-node)
+               (cmark:node-children root)))
+    (is-false (cmark:node-parent old-node))))
+
 
 ;;; ---------------------------------------------------------------------------
 (def-suite cmark/tree-manipulation/consolidate
