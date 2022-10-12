@@ -529,12 +529,60 @@ nothing.
 Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
 insert before an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
 is already a child (signals @code{CHILD-NODE}).
+
+The following restarts are provided:
+
+@table @asis
+@item @code{DETACH-FROM-PARENT}
+Detaches @var{SIBLING} from its parent and thus from its original tree, then
+resumes the function.
+
+@item @code{PREPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{NODE} to @var{NEW-PARENT} as its first child, then resumes the
+function.
+
+@item @code{APPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{NODE} to @var{NEW-PARENT} as its last child, then resumes the
+function.
+
+@item @code{INSERT-BEFORE-SIBLING} (@var{SIBLING})
+Attaches @var{NODE} to into the tree as the predecessor of @var{SIBLING}, then
+resumes the function.
+
+@item @code{INSERT-AFTER-SIBLING} (@var{SIBLING})
+Attaches @var{NODE} to into the tree as the successor of @var{SIBLING}, then
+resumes the function.
+@end table
 @end defun
 
 @defun INSERT-NODE-AFTER NODE SIBLING
 Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
 insert after an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
 is already a child (signals @code{CHILD-NODE}).
+
+The following restarts are provided:
+
+@table @asis
+@item @code{DETACH-FROM-PARENT}
+Detaches @var{SIBLING} from its parent and thus from its original tree, then
+resumes the function.
+
+@item @code{PREPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{NODE} to @var{NEW-PARENT} as its first child, then resumes the
+function.
+
+@item @code{APPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{NODE} to @var{NEW-PARENT} as its last child, then resumes the
+function.
+
+@item @code{INSERT-BEFORE-SIBLING} (@var{SIBLING})
+Attaches @var{NODE} to into the tree as the predecessor of @var{SIBLING}, then
+resumes the function.
+
+@item @code{INSERT-AFTER-SIBLING} (@var{SIBLING})
+Attaches @var{NODE} to into the tree as the successor of @var{SIBLING}, then
+resumes the function.
+@end table
 @end defun
 
 @defun REPLACE-NODE OLD-NODE NEW-NODE
@@ -543,13 +591,13 @@ tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}. The
 following restarts are provided:
 
 @table @asis
-@item @code{APPEND-TO-PARENT} (@var{NEW-PARENT})
-Attaches @var{OLD-NODE} to @var{NEW-PARENT} as its last child, then resumes the
-function.
-
 @item @code{PREPEND-TO-PARENT} (@var{NEW-PARENT})
 Attaches @var{OLD-NODE} to @var{NEW-PARENT} as its first child, then resumes
 the function.
+
+@item @code{APPEND-TO-PARENT} (@var{NEW-PARENT})
+Attaches @var{OLD-NODE} to @var{NEW-PARENT} as its last child, then resumes the
+function.
 
 @item @code{INSERT-BEFORE-SIBLING} (@var{SIBLING})
 Attaches @var{OLD-NODE} to into the tree as the predecessor of @var{SIBLING},
@@ -813,7 +861,7 @@ bad things can happen.
 @end deftypefn
 
 @deftypefn {CFFI function} {:VOID} FREE-NODE @
-  (:POINTER @var{NODE}))
+  (:POINTER @var{NODE})
 Frees the memory allocated for a node and any children.
 @end deftypefn
 
@@ -1019,7 +1067,7 @@ Sets the URL of a link or image NODE. Returns 1 on success, 0 on failure.
 @end deftypefn
 
 @deftypefn {CFFI function} {:POINTER} NODE-GET-TITLE @
-  (:POINTER) @var{NODE})
+  (:POINTER) @var{NODE}
 Returns the title of a link or image NODE, or an empty string if no title is
 set. Returns NULL if called on a node that is not a link or image.
 @end deftypefn
@@ -1031,7 +1079,7 @@ Sets the TITLE of a link or image NODE. Returns 1 on success, 0 on failure.
 @end deftypefn
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-ON-ENTER @
-  (:POINTER) @var{NODE})
+  (:POINTER) @var{NODE}
 Returns the literal \"on enter\" text for a custom NODE, or an empty string if
 no on_enter is set. Returns NULL if called on a non-custom node.
 @end deftypefn
@@ -1057,7 +1105,7 @@ node will be rendered before this text. Returns 1 on success 0 on failure.
 @end deftypefn
 
 @deftypefn {CFFI function} {:INT} NODE-GET-START-LINE @
-  (:POINTER) @var{NODE})
+  (:POINTER) @var{NODE}
 Returns the line on which NODE begins.
 @end deftypefn
 

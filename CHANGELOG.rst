@@ -13,6 +13,12 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 Unreleased
 ##########
 
+Fixed
+=====
+
+- Child node getting dropped when calling `INSERT-NODE-BEFORE`
+
+
 Added
 =====
 - Restart `DETACH-FROM-PARENT` in `APPEND-CHILD-NODE`
@@ -21,6 +27,16 @@ Added
 - Restart `APPEND-TO-PARENT` in `REPLACE-NODE`
 - Restart `INSERT-BEFORE-SIBLING` in `REPLACE-NODE`
 - Restart `INSERT-AFTER-SIBLING` in `REPLACE-NODE`
+- Restart `DETACH-FROM-PARENT` in `INSERT-NODE-BEFORE`
+- Restart `PREPEND-TO-PARENT` in `INSERT-NODE-BEFORE`
+- Restart `APPEND-TO-PARENT` in `INSERT-NODE-BEFORE`
+- Restart `INSERT-BEFORE-SIBLING` in `INSERT-NODE-BEFORE`
+- Restart `INSERT-AFTER-SIBLING` in `INSERT-NODE-BEFORE`
+- Restart `DETACH-FROM-PARENT` in `INSERT-NODE-AFTER`
+- Restart `PREPEND-TO-PARENT` in `INSERT-NODE-AFTER`
+- Restart `APPEND-TO-PARENT` in `INSERT-NODE-AFTER`
+- Restart `INSERT-BEFORE-SIBLING` in `INSERT-NODE-AFTER`
+- Restart `INSERT-AFTER-SIBLING` in `INSERT-NODE-AFTER`
 
 
 [0.3.0] - 2022-10-08

@@ -46,7 +46,7 @@
                   (format stream "Append node ~A as the last child of another node" old-node))
         (progn
           (setf parent new-parent)
-          (append-child-node parent old-node)))
+          (append-child-node new-parent old-node)))
       (insert-before-sibling (sibling)
         :report (lambda (stream)
                   (format stream "Insert node ~A before another node" old-node))
@@ -134,15 +134,46 @@
   "Helper function, inserts SIBLING before or after NODE, depending on the
   METHOD."
   (declare (type node node sibling))
+  (restart-case
+      (when (node-parent sibling)
+        (error 'child-node :node sibling
+               :format-control "Trying to assign a parent to non-orphan node ~A"
+               :format-arguments (list sibling)))
+    (detach-from-parent ()
+      :report (lambda (stream)
+                (format stream "Detach node ~A from its parent" sibling))
+      (unlink-node sibling)))
   (let ((parent (node-parent node)))
-    (unless parent
-      (error 'orphan-node :node node
-           :format-control "Trying to add a sibling to orphan node ~A"
-           :format-arguments (list node)))
-    (when (node-parent sibling)
-      (error 'child-node :node sibling
-           :format-control "Trying to assign a parent to non-orphan node ~A"
-           :format-arguments (list sibling)))
+    (restart-case
+        (unless parent
+          (error 'orphan-node :node node
+                 :format-control "Trying to add a sibling to orphan node ~A"
+                 :format-arguments (list node)))
+      (prepend-to-parent (new-parent)
+        :report (lambda (stream)
+                  (format stream "Append node ~A as the last child of another node" node))
+        (progn
+          (setf parent new-parent)
+          (prepend-child-node new-parent node)))
+      (append-to-parent (new-parent)
+        :report (lambda (stream)
+                  (format stream "Append node ~A as the last child of another node" node))
+        (progn
+          (setf parent new-parent)
+          (append-child-node new-parent node)))
+      (insert-before-sibling (sibling)
+        :report (lambda (stream)
+                  (format stream "Insert node ~A before another node" node))
+        (progn
+          (insert-node-before sibling node)
+          (setf parent (node-parent sibling))))
+      (insert-after-sibling (sibling)
+        :report (lambda (stream)
+                  (format stream "Insert node ~A after another node" node))
+        (progn
+          (insert-node-after sibling node)
+          (setf parent (node-parent sibling)))))
+
     (setf (slot-value sibling 'parent) parent)
     (with-slots (children) parent
       (setf children (funcall method
@@ -151,17 +182,19 @@
                               sibling))))
   t)
 
-(defun insert-before (list i e)
-  "Helper function"
+(defun insert-before (list i element)
+  "Helper function, returns LIST with ELEMENT inserted before element at
+  position I. Destructive towards LIST!"
   (declare (type list list)
            (type (integer 0) i)
-           (type t e))
-  (if (zerop i)
-      (push e list)
-      (push e (cdr (nthcdr (- i 1) list)))))
+           (type t element))
+  (let ((tail (nthcdr i list)))
+    (push element tail)
+    (nconc (subseq list 0 i) tail)))
 
 (defun insert-after (list i e)
-  "Helper function"
+  "Helper function, returns LIST with ELEMENT inserted after element at
+  position I. Destructive towards LIST!"
   (declare (type list list)
            (type (integer 0) i)
            (type t e))

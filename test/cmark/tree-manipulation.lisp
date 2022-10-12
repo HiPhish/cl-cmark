@@ -109,12 +109,24 @@
 
 (test insert-before-existing
   "Inserting before an existing node in a tree"
-  (let* ((child1 (make-instance 'cmark:block-quote-node))
-         (child2 (make-instance 'cmark:block-quote-node))
-         (parent (make-instance 'cmark:document-node)))
+  (let* ((parent (make-instance 'cmark:document-node))
+         (child1 (make-instance 'cmark:block-quote-node))
+         (child2 (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node parent child2)
     (cmark:insert-node-before child2 child1)
     (is (equal (list child1 child2)
+               (cmark:node-children parent)))))
+
+(test insert-between-existing
+  "Inserting before an existing node in a tree"
+  (let* ((parent (make-instance 'cmark:document-node))
+         (child1 (make-instance 'cmark:block-quote-node))
+         (child2 (make-instance 'cmark:block-quote-node))
+         (child3 (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node parent child1)
+    (cmark:append-child-node parent child2)
+    (cmark:insert-node-before child2 child3)
+    (is (equal (list child1 child3 child2)
                (cmark:node-children parent)))))
 
 (test insert-before-orphan
@@ -134,6 +146,84 @@
     (cmark:append-child-node parent2 child2)
     (signals cmark:child-node
       (cmark:insert-node-before child1 child2))))
+
+(test insert-before-non-orphan-node/detach-from-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((child1  (make-instance 'cmark:block-quote-node))
+         (child2  (make-instance 'cmark:block-quote-node))
+         (parent1 (make-instance 'cmark:document-node))
+         (parent2 (make-instance 'cmark:document-node)))
+    (cmark:append-child-node parent1 child1)
+    (cmark:append-child-node parent2 child2)
+    (handler-bind
+        ((cmark:child-node (lambda (condition)
+                             (declare (ignore condition))
+                             (invoke-restart 'cmark:detach-from-parent))))
+      (cmark:insert-node-before child1 child2))
+    (is (equal (list child2 child1)
+               (node-children parent1)))
+    (is-false 
+        (node-children parent2))))
+
+(test insert-before-orphan-node/prepend-to-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:prepend-to-parent root))))
+      (cmark:insert-node-before node-1 node-2))
+    (is (equal (list node-2 node-1 node-0)
+               (node-children root)))))
+
+(test insert-before-orphan-node/append-to-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:append-to-parent root))))
+      (cmark:insert-node-before node-1 node-2))
+    (is (equal (list node-0 node-2 node-1)
+               (node-children root)))))
+
+(test insert-before-orphan-node/insert-before-sibling
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:insert-before-sibling node-0))))
+      (cmark:insert-node-before node-1 node-2))
+    (is (equal (list node-2 node-1 node-0)
+               (node-children root)))))
+
+(test insert-before-orphan-node/insert-after-sibling
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:insert-after-sibling node-0))))
+      (cmark:insert-node-before node-1 node-2))
+    (is (equal (list node-0 node-2 node-1)
+               (node-children root)))))
 
 
 ;;; ---------------------------------------------------------------------------
@@ -169,6 +259,84 @@
     (cmark:append-child-node parent2 child2)
     (signals cmark:child-node
       (cmark:insert-node-after child1 child2))))
+
+(test insert-after-non-orphan-node/detach-from-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((child1  (make-instance 'cmark:block-quote-node))
+         (child2  (make-instance 'cmark:block-quote-node))
+         (parent1 (make-instance 'cmark:document-node))
+         (parent2 (make-instance 'cmark:document-node)))
+    (cmark:append-child-node parent1 child1)
+    (cmark:append-child-node parent2 child2)
+    (handler-bind
+        ((cmark:child-node (lambda (condition)
+                             (declare (ignore condition))
+                             (invoke-restart 'cmark:detach-from-parent))))
+      (cmark:insert-node-after child1 child2))
+    (is (equal (list child1 child2)
+               (node-children parent1)))
+    (is-false 
+        (node-children parent2))))
+
+(test insert-after-orphan-node/prepend-to-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:prepend-to-parent root))))
+      (cmark:insert-node-after node-1 node-2))
+    (is (equal (list node-1 node-2 node-0)
+               (node-children root)))))
+
+(test insert-after-orphan-node/append-to-parent
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:append-to-parent root))))
+      (cmark:insert-node-after node-1 node-2))
+    (is (equal (list node-0 node-1 node-2)
+               (node-children root)))))
+
+(test insert-after-orphan-node/insert-before-sibling
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:insert-before-sibling node-0))))
+      (cmark:insert-node-after node-1 node-2))
+    (is (equal (list node-1 node-2 node-0)
+               (node-children root)))))
+
+(test insert-after-orphan-node/insert-after-sibling
+  "A restarts lets us orphan the child node and resume the function"
+  (let* ((root    (make-instance 'cmark:document-node))
+         (node-0  (make-instance 'cmark:block-quote-node))
+         (node-1  (make-instance 'cmark:block-quote-node))
+         (node-2  (make-instance 'cmark:block-quote-node)))
+    (cmark:append-child-node root node-0)
+    (handler-bind
+        ((cmark:orphan-node (lambda (condition)
+                              (declare (ignore condition))
+                              (invoke-restart 'cmark:insert-after-sibling node-0))))
+      (cmark:insert-node-after node-1 node-2))
+    (is (equal (list node-0 node-1 node-2)
+               (node-children root)))))
 
 
 ;;; ---------------------------------------------------------------------------
