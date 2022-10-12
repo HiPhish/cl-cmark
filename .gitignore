@@ -1,2 +1,4 @@
 doc/*.info
 doc/*.html
+doc/*.pdf
+doc/*.t2d
