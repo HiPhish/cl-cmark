@@ -36,7 +36,7 @@
         (parent (make-instance 'cmark:block-quote-node))
         (root   (make-instance 'cmark:document-node)))
     (cmark:prepend-child-node parent child)
-    (signals cmark:child-node (cmark:prepend-child-node root child))))
+    (signals cmark:unexpected-parent (cmark:prepend-child-node root child))))
 
 (test prepend-non-orphan/detach-from-parent
   "A restart lets us detach the node from its parent"
@@ -45,9 +45,10 @@
         (root   (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent child)
     (handler-bind
-        ((cmark:child-node (lambda (c)
-                             (declare (ignore c))
-                             (invoke-restart 'cmark:detach-from-parent))))
+        ((cmark:unexpected-parent
+           (lambda (c)
+             (declare (ignore c))
+             (invoke-restart 'cmark:detach-from-parent))))
       (cmark:prepend-child-node root child))
     (is (equal (list child)
                (cmark:node-children root)))))
@@ -84,7 +85,7 @@
         (parent (make-instance 'cmark:block-quote-node))
         (root   (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent child)
-    (signals cmark:child-node (cmark:append-child-node root child))))
+    (signals cmark:unexpected-parent (cmark:append-child-node root child))))
 
 (test append-non-orphan/detach-from-parent
   "A restart lets us detach the node from its parent"
@@ -93,9 +94,10 @@
         (root   (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent child)
     (handler-bind
-        ((cmark:child-node (lambda (c)
-                             (declare (ignore c))
-                             (invoke-restart 'cmark:detach-from-parent))))
+        ((cmark:unexpected-parent
+           (lambda (c)
+             (declare (ignore c))
+             (invoke-restart 'cmark:detach-from-parent))))
       (cmark:append-child-node root child))
     (is (equal (list child)
                (cmark:node-children root)))))
@@ -133,7 +135,7 @@
   "Inserting a node before an orphan node signals an error"
   (let* ((child  (make-instance 'cmark:block-quote-node))
          (parent (make-instance 'cmark:document-node)))
-    (signals cmark:orphan-node
+    (signals cmark:unexpected-orphan
       (cmark:insert-node-before parent child))))
 
 (test insert-before-non-orphan-node
@@ -144,7 +146,7 @@
          (parent2 (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
-    (signals cmark:child-node
+    (signals cmark:unexpected-parent
       (cmark:insert-node-before child1 child2))))
 
 (test insert-before-non-orphan-node/detach-from-parent
@@ -156,9 +158,10 @@
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
     (handler-bind
-        ((cmark:child-node (lambda (condition)
-                             (declare (ignore condition))
-                             (invoke-restart 'cmark:detach-from-parent))))
+        ((cmark:unexpected-parent
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:detach-from-parent))))
       (cmark:insert-node-before child1 child2))
     (is (equal (list child2 child1)
                (node-children parent1)))
@@ -173,9 +176,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:prepend-to-parent root))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:prepend-to-parent root))))
       (cmark:insert-node-before node-1 node-2))
     (is (equal (list node-2 node-1 node-0)
                (node-children root)))))
@@ -188,9 +192,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:append-to-parent root))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:append-to-parent root))))
       (cmark:insert-node-before node-1 node-2))
     (is (equal (list node-0 node-2 node-1)
                (node-children root)))))
@@ -203,9 +208,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:insert-before-sibling node-0))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-before-sibling node-0))))
       (cmark:insert-node-before node-1 node-2))
     (is (equal (list node-2 node-1 node-0)
                (node-children root)))))
@@ -218,9 +224,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:insert-after-sibling node-0))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-after-sibling node-0))))
       (cmark:insert-node-before node-1 node-2))
     (is (equal (list node-0 node-2 node-1)
                (node-children root)))))
@@ -246,7 +253,7 @@
   "Inserting a node after an orphan node signals an error"
   (let* ((child  (make-instance 'cmark:block-quote-node))
          (parent (make-instance 'cmark:document-node)))
-    (signals cmark:orphan-node
+    (signals cmark:unexpected-orphan
       (cmark:insert-node-after parent child))))
 
 (test insert-after-non-orphan-node
@@ -257,7 +264,7 @@
          (parent2 (make-instance 'cmark:document-node)))
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
-    (signals cmark:child-node
+    (signals cmark:unexpected-parent
       (cmark:insert-node-after child1 child2))))
 
 (test insert-after-non-orphan-node/detach-from-parent
@@ -269,9 +276,10 @@
     (cmark:append-child-node parent1 child1)
     (cmark:append-child-node parent2 child2)
     (handler-bind
-        ((cmark:child-node (lambda (condition)
-                             (declare (ignore condition))
-                             (invoke-restart 'cmark:detach-from-parent))))
+        ((cmark:unexpected-parent
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:detach-from-parent))))
       (cmark:insert-node-after child1 child2))
     (is (equal (list child1 child2)
                (node-children parent1)))
@@ -286,9 +294,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:prepend-to-parent root))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:prepend-to-parent root))))
       (cmark:insert-node-after node-1 node-2))
     (is (equal (list node-1 node-2 node-0)
                (node-children root)))))
@@ -301,9 +310,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:append-to-parent root))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:append-to-parent root))))
       (cmark:insert-node-after node-1 node-2))
     (is (equal (list node-0 node-1 node-2)
                (node-children root)))))
@@ -316,9 +326,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:insert-before-sibling node-0))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-before-sibling node-0))))
       (cmark:insert-node-after node-1 node-2))
     (is (equal (list node-1 node-2 node-0)
                (node-children root)))))
@@ -331,9 +342,10 @@
          (node-2  (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root node-0)
     (handler-bind
-        ((cmark:orphan-node (lambda (condition)
-                              (declare (ignore condition))
-                              (invoke-restart 'cmark:insert-after-sibling node-0))))
+        ((cmark:unexpected-orphan
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'cmark:insert-after-sibling node-0))))
       (cmark:insert-node-after node-1 node-2))
     (is (equal (list node-0 node-1 node-2)
                (node-children root)))))
@@ -383,7 +395,7 @@
   "Replacing an orphan node signals an error"
   (let ((old-node (make-instance 'cmark:block-quote-node))
         (new-node (make-instance 'cmark:block-quote-node)))
-    (signals cmark:orphan-node
+    (signals cmark:unexpected-orphan
       (cmark:replace-node old-node new-node))))
 
 (test replace-orphan-node/prepend-to-parent
@@ -394,7 +406,7 @@
         (new-node (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root child)
     (handler-bind
-        ((cmark:orphan-node
+        ((cmark:unexpected-orphan
            (lambda (condition)
              (declare (ignore condition))
              (invoke-restart 'cmark:prepend-to-parent root))))
@@ -411,7 +423,7 @@
         (new-node (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root child)
     (handler-bind
-        ((cmark:orphan-node
+        ((cmark:unexpected-orphan
            (lambda (condition)
              (declare (ignore condition))
              (invoke-restart 'cmark:append-to-parent root))))
@@ -428,7 +440,7 @@
         (new-node (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root child)
     (handler-bind
-        ((cmark:orphan-node
+        ((cmark:unexpected-orphan
            (lambda (condition)
              (declare (ignore condition))
              (invoke-restart 'cmark:insert-before-sibling child))))
@@ -445,7 +457,7 @@
         (new-node (make-instance 'cmark:block-quote-node)))
     (cmark:append-child-node root child)
     (handler-bind
-        ((cmark:orphan-node
+        ((cmark:unexpected-orphan
            (lambda (condition)
              (declare (ignore condition))
              (invoke-restart 'cmark:insert-after-sibling child))))

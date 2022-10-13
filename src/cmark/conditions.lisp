@@ -8,12 +8,12 @@
            :documentation "String to parse"))
   (:documentation "Trying to manipulate an exhausted streaming parser."))
 
-(define-condition orphan-node (error)
+(define-condition unexpected-orphan (error)
   ((node :initarg :node :type node
          :documentation "The node in question"))
   (:documentation "Orphan node in a context where a child node is expected."))
 
-(define-condition child-node (error)
+(define-condition unexpected-parent (error)
   ((node :initarg :node :type node
          :documentation "The node in question"))
   (:documentation "Child node in a context where a orphan node is expected."))

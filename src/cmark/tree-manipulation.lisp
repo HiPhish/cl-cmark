@@ -16,14 +16,14 @@
 
 (defun insert-node-before (node sibling)
   "Inserts SIBLING into the tree in front of NODE. It is an error to insert
-  before an orphan (signals ORPHAN-NODE), or to insert a node which is already
-  a child (signals CHILD-NODE)."
+  before an orphan (signals UNEXPECTED-ORPHAN), or to insert a node which is already
+  a child (signals UNEXPECTED-PARENT)."
   (insert-node node sibling #'insert-before))
 
 (defun insert-node-after (node sibling)
   "Inserts SIBLING into the tree in front of NODE. It is an error to insert
-  after an orphan (signals ORPHAN-NODE), or to insert a node which is already
-  a child (signals CHILD-NODE)."
+  after an orphan (signals UNEXPECTED-ORPHAN), or to insert a node which is already
+  a child (signals UNEXPECTED-PARENT)."
   (insert-node node sibling #'insert-after))
 
 (defun replace-node (old-node new-node)
@@ -32,7 +32,7 @@
   (let ((parent (node-parent old-node)))
     (restart-case
         (unless parent
-          (error 'orphan-node :node old-node
+          (error 'unexpected-orphan :node old-node
                  :format-control "Old node ~A has no parent node."
                  :format-arguments (list old-node)))
       (prepend-to-parent (new-parent)
@@ -66,14 +66,14 @@
 
 (defun prepend-child-node (node child)
   "Insert CHILD as the first child node of NODE. It is an error to prepend a
-  node which is already a child of a node, signals CHILD-NODE. The following
-  restarts are provided:
+  node which is already a child of a node, signals UNEXPECTED-PARENT The
+  following restarts are provided:
   - DETACH-FROM-PARENT:
       Detaches CHILD from its parent and thus from its original tree, then
       resumes the function."
   (restart-case
       (when (node-parent child)
-        (error 'child-node :node child
+        (error 'unexpected-parent :node child
                :format-control "Node ~A is not an orphan node."
                :format-arguments (list child)))
     (detach-from-parent ()
@@ -85,14 +85,14 @@
 
 (defun append-child-node (node child)
   "Append CHILD as the last child node of NODE. It is an error to append a node
-  which is already a child of a node, signals CHILD-NODE. The following
+  which is already a child of a node, signals UNEXPECTED-PARENT The following
   restarts are provided:
   - DETACH-FROM-PARENT:
       Detaches CHILD from its parent and thus from its original tree, then
       resumes the function."
   (restart-case
       (when (node-parent child)
-        (error 'child-node :node child
+        (error 'unexpected-parent :node child
                :format-control "Node ~A is not an orphan node."
                :format-arguments (list child)))
     (detach-from-parent ()
@@ -136,7 +136,7 @@
   (declare (type node node sibling))
   (restart-case
       (when (node-parent sibling)
-        (error 'child-node :node sibling
+        (error 'unexpected-parent :node sibling
                :format-control "Trying to assign a parent to non-orphan node ~A"
                :format-arguments (list sibling)))
     (detach-from-parent ()
@@ -146,7 +146,7 @@
   (let ((parent (node-parent node)))
     (restart-case
         (unless parent
-          (error 'orphan-node :node node
+          (error 'unexpected-orphan :node node
                  :format-control "Trying to add a sibling to orphan node ~A"
                  :format-arguments (list node)))
       (prepend-to-parent (new-parent)

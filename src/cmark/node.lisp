@@ -3,10 +3,11 @@
 (in-package #:cmark)
 
 (defclass node ()
-  ((parent :initarg parent :reader node-parent :initform nil :type (or node null)
-           :documentation "Parent node of this node, or NIL if this is a root node")
-   (children :initarg :children :reader node-children :initform nil :type list
-             :documentation "All child nodes of this node")
+  (
+   ; (parent :initarg parent :reader node-parent :initform nil :type (or node null)
+   ;         :documentation "Parent node of this node, or NIL if this is a root node")
+   ; (children :initarg :children :reader node-children :initform nil :type list
+   ;           :documentation "All child nodes of this node")
    (user-data :initarg :user-data :accessor node-user-data :type integer
               :documentation "User data of the node")
    (start-line :initarg :start-line :reader node-start-line :type (integer 0 *)
@@ -43,7 +44,7 @@
   ()
   (:documentation "Represents and item inside a list (bullet or unordered)."))
 
-(defclass code-block-node (node)
+(defclass code-block-node (parent-node child-node)
   ((fence-info :initarg :fence-info :accessor node-fence-info :type string
                :documentation "Info string from a fenced code block")
    (literal :initarg :literal :accessor node-literal :type (or string null)

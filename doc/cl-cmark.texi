@@ -532,8 +532,8 @@ nothing.
 
 @defun INSERT-NODE-BEFORE NODE SIBLING
 Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
-insert before an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
-is already a child (signals @code{CHILD-NODE}).
+insert before an orphan (signals @code{UNEXPECTED-ORPHAN}), or to insert a node
+which is already a child (signals @code{UNEXPECTED-PARENT}).
 
 The following restarts are provided:
 
@@ -562,8 +562,8 @@ resumes the function.
 
 @defun INSERT-NODE-AFTER NODE SIBLING
 Inserts @var{SIBLING} into the tree in front of @var{NODE}. It is an error to
-insert after an orphan (signals @code{ORPHAN-NODE}), or to insert a node which
-is already a child (signals @code{CHILD-NODE}).
+insert after an orphan (signals @code{UNEXPECTED-ORPHAN}), or to insert a node
+which is already a child (signals @code{UNEXPECTED-PARENT}).
 
 The following restarts are provided:
 
@@ -592,8 +592,8 @@ resumes the function.
 
 @defun REPLACE-NODE OLD-NODE NEW-NODE
 Replaces @var{OLD-NODE} with @var{NEW-NODE} and unlinks @var{OLD-NODE} from the
-tree. It is an error to replace an orphan node, signals @code{ORPHAN-NODE}. The
-following restarts are provided:
+tree. It is an error to replace an orphan node, signals
+@code{UNEXPECTED-ORPHAN}. The following restarts are provided:
 
 @table @asis
 @item @code{PREPEND-TO-PARENT} (@var{NEW-PARENT})
@@ -616,8 +616,8 @@ then resumes the function.
 
 @defun PREPEND-CHILD-NODE NODE CHILD
 Insert @var{CHILD} as the first child node of @var{NODE}. It is an error to
-prepend a node which is already a child of a node, signals @code{CHILD-NODE}.
-The following restarts are provided:
+prepend a node which is already a child of a node, signals
+@code{UNEXPECTED-PARENT}. The following restarts are provided:
 
 @table @code
 @item DETACH-FROM-PARENT
@@ -628,8 +628,8 @@ resumes the function.
 
 @defun APPEND-CHILD-NODE NODE CHILD
 Append CHILD as the last child node of NODE. It is an error to append a node
-which is already a child of a node, signals @code{CHILD-NODE}. The following
-restarts are provided:
+which is already a child of a node, signals @code{UNEXPECTED-PARENT}. The
+following restarts are provided:
 
 @table @code
 @item DETACH-FROM-PARENT
@@ -775,11 +775,11 @@ Trying to manipulate an exhausted streaming parser. The @var{STRING} contains
 the string to parse or @code{NIL} if not applicable.
 @end deftp
 
-@deftp {Error} ORPHAN-NODE (@code{:NODE} @var{NODE})
+@deftp {Error} UNEXPECTED-ORPHAN (@code{:NODE} @var{NODE})
 Orphan node in a context where a child node is expected.
 @end deftp
 
-@deftp {Error} CHILD-NODE (@code{:NODE} @var{NODE})
+@deftp {Error} UNEXPECTED-PARENT (@code{:NODE} @var{NODE})
 Child node in a context where an orphan node is expected.
 @end deftp
 
