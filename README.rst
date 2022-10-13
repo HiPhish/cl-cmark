@@ -87,6 +87,9 @@ is a list of the remaining tasks:
 - Recoverable errors, e.g. if a node needs to be an orphan offer a restart that
   orphans the node
 - Maybe custom printed representation for node classes?
+- Two extra sub-classes of `node`; `parent-node` (has slot `children`) and
+  `child-node` (has slot `parent`). The concrete node classes will then inherit
+  from one or both of the above.
 
 
 License
