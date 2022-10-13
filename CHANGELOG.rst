@@ -39,6 +39,12 @@ Added
 - Restart `INSERT-AFTER-SIBLING` in `INSERT-NODE-AFTER`
 
 
+Changed
+=======
+
+- Minor corrections and clarifications in the manual
+
+
 [0.3.0] - 2022-10-08
 ####################
 

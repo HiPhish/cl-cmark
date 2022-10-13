@@ -55,11 +55,12 @@ This is a short sample Texinfo file.
 @node Introduction
 @chapter Introduction
 
-The CommonMark project is an effort to create an unambiguous formal
-specification of a Markdown dialect. The cl-cmark project is an effort to
-create a Common Lisp implementation of CommonMark. Is is built on top of the
-official reference implementation, which is written in C. To this end we
-provide two systems:
+The CommonMark@footnote{@url{https://commonmark.org/}} project is an effort to
+create an unambiguous formal specification of a Markdown dialect. The cl-cmark
+project is an effort to create a Common Lisp implementation of CommonMark. It
+is built on top of the official reference
+implementation@footnote{@url{https://github.com/commonmark/cmark}}, which is
+written in C. To this end we provide two systems:
 
 @enumerate
 
@@ -87,8 +88,8 @@ The @code{cmark} system has the following direct dependencies:
 @itemize
 
 @item @code{libcmark}
-@item @code{cffi}
-@item @code{flex-streams}
+@item @code{cffi}@footnote{@url{https://cffi.common-lisp.dev/}}
+@item @code{flexi-streams}@footnote{@url{https://edicl.github.io/flexi-streams/}}
 
 @end itemize
 
@@ -97,11 +98,15 @@ The @code{libcmark} system has the following direct dependencies:
 @itemize
 
 @item @code{cffi}
-@item The system library @code{libcmark} must be present at runtime
+@item The system library
+@code{libcmark}@footnote{@url{https://github.com/commonmark/cmark}} must be
+present at runtime
 
 @end itemize
 
-TODO: add Quicklisp instructions once it is in Quicklisp
+Neither of the two system is available in
+Quicklisp@footnote{@url{https://www.quicklisp.org/}} at the time of writing
+yet.
 
 
 @node Tutorial
@@ -114,7 +119,7 @@ should set up a custom package which uses the @code{cmark} system.
 @verbatim
 (asdf:load-system "cmark")
 (defpackage #:cmark-user
- (:use #:cl #:cmark))
+  (:use #:cl))
 (in-package #:cmark-user)
 @end verbatim
 
@@ -123,8 +128,8 @@ entire document as one large string in on go. Regardless of how you parse the
 document, the result is always the root node of the document tree.
 
 @verbatim
-(defvar *document-tree* (cmark::parse-document "Hello *world*!")
- "Root node of the parsed document tree")
+(defvar *document-tree* (cmark:parse-document "Hello *world*!")
+  "Root node of the parsed document tree")
 @end verbatim
 
 There is no technical distinction between a node and a document tree. I use
@@ -160,13 +165,13 @@ each node indented according to its level.
 
 @verbatim
 (defun print-node (node &optional (level 0))
- "Recursively print each node and its children at progressively deeper
- levels"
- (format t "~&~A~A"
-         (make-string (* 2 level) :initial-element #\Space)
-         (class-name (class-of node)))
- (dolist (child (node-children node))
-   (print-node child (1+ level))))
+  "Recursively print each node and its children at progressively deeper
+  levels."
+  (format t "~&~A~A"
+          (make-string (* 2 level) :initial-element #\Space)
+          (class-name (class-of node)))
+  (dolist (child (cmark:node-children node))
+    (print-node child (1+ level))))
 @end verbatim
 
 We use the @code{NODE-CHILDREN} getter method to get the list of all child
@@ -189,11 +194,11 @@ entire sub-tree and append it to the children of the document node.
 
 @verbatim
 (let ((sub-tree (make-instance
-                  'cmark::paragraph-node
+                  'cmark:paragraph-node
                   :children (list (make-instance
-                                    'cmark::text-node
+                                    'cmark:text-node
                                     :literal "That's all, folks.")))))
-  (cmark::append-child-node *DOCUMENT-TREE* sub-tree))
+  (cmark:append-child-node *DOCUMENT-TREE* sub-tree))
 @end verbatim
 
 When we print the document tree again we see that there is now a second
@@ -211,8 +216,8 @@ DOCUMENT-NODE
 @end example
 
 
-@node cmark
-@chapter cmark
+@node The cmark system
+@chapter The cmark system
 
 The @code{cmark} system provides all the essential classes, functions and
 methods to parse a CommonMark document into a tree of nodes, manipulate the
@@ -233,11 +238,11 @@ tree, and parse it.
 
 Parsing is the act of taking some source of text (such as a string), reading
 its input and producing a tree of document nodes. Parsing can be done either in
-one expression, or through the use of some ``parser'' object which we feed the
-document piecewise to. Either way, the result is a single node which is the
+one expression, or through the use of some ``parser'' object into which we feed
+the document piecewise. Either way, the result is a single node which is the
 root of the document tree.
 
-Documents can be parse in ``smart'' mode. When enabled certain character
+Documents can be parsed in ``smart'' mode. When enabled certain character
 combinations will be replaced by others during parsing:
 
 @enumerate
@@ -257,10 +262,10 @@ document, you cannot only parse one part of a document.
 
 @subsection Parsing an input stream
 
-We can parse a finite character input stream. It is import that that the stream
-be finite, otherwise the parser will not know when to stop parsing the document
+We can parse a finite character input stream. It is import that the stream be
+finite, otherwise the parser will not know when to stop parsing the document
 and will block indefinitely. If you want control over when to stop parsing
-consider using a streaming parser.
+consider using a streaming parser instead.
 
 @example
 (with-input-from-string (input "Hello *world*.")
@@ -294,6 +299,13 @@ because the parser is holding on to resources which need to be released.
 
 There is the convenience macro WITH-STREAMING-PARSER which hides all the above
 boilerplate code.
+
+@example
+;;; Evaluates to the root node of the document
+(with-streaming-parser (parser)
+  (feed-streaming-parser parser "Hello *world*!")
+  (finish-streaming-parser parser))
+@end example
 
 @defun MAKE-STREAMING-PARSER &KEY (SMART NIL)
 Instantiates and return a new streaming parser object. A streaming parser can
@@ -330,13 +342,6 @@ It is an error to finish an already closed parser, signals
 Convenience macro that creates a parser named @var{PARSER} which is valid
 inside the @var{BODY} expressions. When the form terminates the parser is
 safely closed. The entire form evaluates to the last @var{BODY} expression.
-
-@example
-;;; Evaluates to the root node of the document
-(with-streaming-parser (parser)
-  (feed-streaming-parser parser "Hello *world*!")
-  (finish-streaming-parser parser))
-@end example
 @end defmac
 
 @node Nodes
@@ -401,7 +406,7 @@ The leaf nodes are as follows:
 @end itemize
 
 The following class definition only cover the different node classes briefly.
-Please refer to the built-in documentation for details.
+Please refer to the built-in documentation for details on their slots.
 
 @deftp {Standard class} NODE PARENT CHILDREN USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
 The parent class of all nodes.
@@ -515,9 +520,9 @@ Whether a @var{NODE} is a leaf-type node or not.
 @cindex Document tree manipulation
 @section Tree manipulation
 
-Tree manipulation means altering the relationship between nodes in tree, such
-as detaching nodes and re-attaching them in other places, or replacing parts of
-the tree entirely.
+Manipulating a tree means altering the relationship between nodes in the tree,
+such as detaching nodes and re-attaching them in other places, or replacing
+parts of the tree entirely.
 
 @defun UNLINK-NODE NODE
 Unlinks a @var{NODE} from its parent, removing it from the node tree. Returns
@@ -661,7 +666,7 @@ children.
 
 @defun NODE-NEXT NODE &OPTIONAL (CHILD 0)
 Returns the next @var{NODE} in the tree, or @code{NIL} if there is none. The
-nodes are traverse in a depth-first manner. The @var{CHILD} parameter
+nodes are traversed in a depth-first manner. The @var{CHILD} parameter
 determines into which child node to descend.
 @end defun
 
@@ -697,12 +702,12 @@ iterator object which can move through the tree.
 
 Either way, whenever we enter a node an @code{ENTER} event is produced and
 whenever we leave a node that is not a leaf node an @code{EXIT} event is
-produced. This lets us implement the visitor pattern in which is perform some
-action, such as outputting and opening or closing HTML tag, when we enter or
-exit a node.
+produced. This lets us implement the visitor pattern in which we perform some
+action, such as outputting an opening or closing HTML tag, when we enter or
+exit a node respectively.
 
-@deftp {Enumeration} NODE-EVENT DONE ENTER EXIT
-The type of node event; their meaning is as follows:
+@deftp {Enumeration} NODE-EVENT
+The type of node event is one of the following symbols:
 
 @table @code
 @item ENTER
@@ -779,8 +784,8 @@ Child node in a context where an orphan node is expected.
 @end deftp
 
 
-@node libcmark
-@chapter libcmark
+@node The libcmark system
+@chapter The libcmark system
 
 This system is mostly a 1:1 translation from the C API to Common Lisp. See the
 @file{cmark(3)} man page for comparison. Using this system requires knowledge
