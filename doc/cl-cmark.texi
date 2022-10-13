@@ -6,7 +6,7 @@
 @syncodeindex vr fn
 
 @copying
-This manual is for cl-cmark (version 0.2.0, updated 2022-06-18), which
+This manual is for cl-cmark (version 0.4.0, updated 2022-06-18), which
 implements a CommonMark parser for Common Lisp.
 
 Copyright @copyright{} 2022 Alejandro "HiPhish" Sanchez
@@ -23,7 +23,7 @@ Free Documentation License".
 
 @titlepage
 @title cl-cmark user manual
-@subtitle for version 0.2.0
+@subtitle for version 0.4.0
 @author Alejandro "HiPhish" Sanchez
 
 @page
