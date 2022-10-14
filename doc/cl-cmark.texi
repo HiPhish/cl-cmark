@@ -9,22 +9,22 @@
 This manual is for cl-cmark (version 0.4.0, updated 2022-06-18), which
 implements a CommonMark parser for Common Lisp.
 
-Copyright @copyright{} 2022 Alejandro "HiPhish" Sanchez
+Copyright @copyright{} 2022 Alejandro ``HiPhish'' Sanchez
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
 or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-A copy of the license is included in the section entitled "GNU
-Free Documentation License".
+A copy of the license is included in the section entitled ``GNU
+Free Documentation License''.
 @end quotation
 @end copying
 
 @titlepage
 @title cl-cmark user manual
 @subtitle for version 0.4.0
-@author Alejandro "HiPhish" Sanchez
+@author Alejandro ``HiPhish'' Sanchez
 
 @page
 @vskip 0pt plus 1filll
@@ -233,7 +233,7 @@ tree, and parse it.
 @end menu
 
 @node Parsing
-@cindex Parsing CommonMark documents
+@cindex Parsing documents
 @section Parsing
 
 Parsing is the act of taking some source of text (such as a string), reading
@@ -345,7 +345,8 @@ safely closed. The entire form evaluates to the last @var{BODY} expression.
 @end defmac
 
 @node Nodes
-@cindex Document tree and nodes
+@cindex Document tree
+@cindex Nodes
 @section Nodes
 
 Nodes are the building blocks of any document tree. Each node is a CLOS object
@@ -353,55 +354,30 @@ whose class determines the role of the node within the document.
 
 @subsection Node classes
 
-Each node can only ever be either a block-level node or an inline node.
-
-The block-level nodes are as follows:
-
-@itemize
-
-@item @code{TEXT-NODE}
-@item @code{SOFTBREAK-NODE}
-@item @code{LINEBREAK-NODE}
-@item @code{CODE-NODE}
-@item @code{HTML-INLINE-NODE}
-@item @code{CUSTOM-INLINE-NODE}
-@item @code{EMPH-NODE}
-@item @code{STRONG-NODE}
-@item @code{LINK-NODE}
-@item @code{IMAGE-NODE}
-
-@end itemize
-
-The inline nodes are as follows:
-
-@itemize
-
-@item @code{TEXT-NODE}
-@item @code{SOFTBREAK-NODE}
-@item @code{LINEBREAK-NODE}
-@item @code{CODE-NODE}
-@item @code{HTML-INLINE-NODE}
-@item @code{CUSTOM-INLINE-NODE}
-@item @code{EMPH-NODE}
-@item @code{STRONG-NODE}
-@item @code{LINK-NODE}
-@item @code{IMAGE-NODE}
-
-@end itemize
-
-Furthermore, each node can only ever be a root node, an intermediate node or a
+Each node can only ever be a root node, an intermediate node or a
 leaf node. Leaf nodes are those that have no children, which means they do not
 inherit from @code{PARENT-NODE}. Intermediate nodes inherit from
 @code{PARENT-NODE} and @code{CHILD-NODE}. A root node is one that does not
 inherit from @code{CHILD-NODE}; currently @code{DOCUMENT-NODE} is the only root
 node class.
 
+Furthermore, each node can only ever be either a block-level node or an inline
+node. Block-level nodes are nodes such as paragraphs or lists, while inline
+nodes are part of running text, such as emphatic text or a URL link.
+
 The following class definition only cover the different node classes briefly.
 Please refer to the built-in documentation for details on their slots.
+
+@subsubsection Abstract nodes
 
 @deftp {Standard class} NODE USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
 The parent class of all nodes.
 @end deftp
+
+A parent node is one that can have children, while a child node is one that can
+have a parent node. It is possible for either of those values to be @code{NIL}
+even if it does not make sense semantically; this will be the case while the
+tree is being built up or manipulated.
 
 @deftp {Standard class} {PARENT-NODE (NODE)} CHILDREN
 The parent class of all nodes which can have child nodes.
@@ -410,6 +386,22 @@ The parent class of all nodes which can have child nodes.
 @deftp {Standard class} {CHILD-NODE (NODE)} PARENT
 The parent class of all which can have a parent node.
 @end deftp
+
+The following two nodes only serve as marker mixins: they tag a node as either
+block-level or inline.
+
+@deftp {Standard class} {BLOCK-NODE}
+A mixin class which marks block-level nodes.
+@end deftp
+
+
+@deftp {Standard class} {INLINE-NODE}
+A mixin class which marks inline nodes.
+@end deftp
+
+
+
+@subsubsection Block-level nodes
 
 @deftp {Standard class} {DOCUMENT-NODE (PARENT-NODE)}
 The root node of the document.
@@ -462,6 +454,9 @@ A line break which may be rendered differently depending on the rendering option
 @deftp {Standard class} {LINEBREAK-NODE (CHILD-NODE)}
 A hard line break which does not terminate the current block level element.
 @end deftp
+
+
+@subsubsection Inline nodes
 
 @deftp {Standard class} {CODE-NODE (CHILD-NODE)} LITERAL
 Inline verbatim code.
@@ -527,7 +522,7 @@ List of children of a @var{NODE}.
 
 
 @node Tree manipulation
-@cindex Document tree manipulation
+@cindex Tree manipulation
 @section Tree manipulation
 
 Manipulating a tree means altering the relationship between nodes in the tree,
@@ -657,7 +652,7 @@ become orphaned. It is undefined which node will remain in the tree.
 
 
 @node Tree traversal
-@cindex Document tree traversal
+@cindex Tree traversal
 @section Tree traversal
 
 Tree traversal is the act of moving along the nodes of the tree. We can move
@@ -702,7 +697,7 @@ orphan.
 
 
 @node Tree iteration
-@cindex Document tree iteration
+@cindex Tree iteration
 @section Tree iteration
 
 Tree iteration lets us walk through the tree nodes in depth-first order,
@@ -960,7 +955,7 @@ Returns the root node.
   (CMARK-EVENT-TYPE @var{EVENT-TYPE})
 Resets the ITERATOR so that the current node is CURRENT-NODE and the event
 type is EVENT-TYPE. The new current node must be a descendant of the root
-node or the root node itself."
+node or the root node itself.
 @end deftypefn
 
 
@@ -985,7 +980,7 @@ Returns the type of node, or CMARK_NODE_NONE on error.
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-TYPE-STRING @
   (:POINTER @var{NODE})
-Like NODE-GET-TYPE, but returns a string representation of the type, or "<unknown>".
+Like NODE-GET-TYPE, but returns a string representation of the type, or ``<unknown>''.
 @end deftypefn
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-LITERAL @
@@ -1054,7 +1049,7 @@ Returns 1 if NODE is a tight list, 0 otherwise.
 @deftypefn {CFFI function} {:INT} NODE-SET-LIST-TIGHT @
   (:POINTER @var{NODE}) @
   (:INT @var{TIGHT})
-Sets the \"TIGHTness\" of a list. Returns 1 on success, 0 on failure.
+Sets the ``tightness'' of a list. Returns 1 on success, 0 on failure.
 @end deftypefn
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-FENCE-INFO @
@@ -1095,8 +1090,8 @@ Sets the TITLE of a link or image NODE. Returns 1 on success, 0 on failure.
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-ON-ENTER @
   (:POINTER) @var{NODE}
-Returns the literal \"on enter\" text for a custom NODE, or an empty string if
-no on_enter is set. Returns NULL if called on a non-custom node.
+Returns the literal @code{"on enter"} text for a custom NODE, or an empty
+string if no on_enter is set. Returns NULL if called on a non-custom node.
 @end deftypefn
 
 @deftypefn {CFFI function} {:INT} NODE-SET-ON-ENTER @
@@ -1108,8 +1103,8 @@ the node will be rendered after this text. Returns 1 on success 0 on failure.
 
 @deftypefn {CFFI function} {:STRING} NODE-GET-ON-EXIT @
   (:POINTER @var{NODE})
-Returns the literal \"on exit\" text for a custom node, or an empty string if
-no on_exit is set. Returns NULL if called on a non-custom node.
+Returns the literal @code{"on exit"} text for a custom node, or an empty string
+if no on_exit is set. Returns NULL if called on a non-custom node.
 @end deftypefn
 
 @deftypefn {CFFI function} {:INT} NODE-SET-ON-EXIT @
@@ -1294,8 +1289,8 @@ Render softbreak elements as hard line breaks.
 
 @defvr Constant +CMARK-OPT-SAFE+
 @var{+CMARK-OPT-SAFE+} is defined here for API compatibility, but it no longer
-has any effect. "Safe" mode is now the default: set @var{+CMARK-OPT-UNSAFE+} to
-disable it.
+has any effect. ``Safe'' mode is now the default: set @var{+CMARK-OPT-UNSAFE+}
+to disable it.
 @end defvr
 
 @subsection Options affecting parsing
@@ -1336,12 +1331,22 @@ The library version string for runtime checks.
 @end deftypefn
 
 
+@node Concept index
+@appendix Concept index
+@printindex cp
+
 @node Symbol index
 @appendix Symbol index
 @printindex fn
 
-@node Concept index
-@appendix Concept index
-@printindex cp
+@node Type index
+@appendix Type index
+@printindex tp
+
+@c FIXME: For some reason variables and constants defined with @defvr show up
+@c in the function index
+@c @node Variable index
+@c @appendix Variable index
+@c @printindex vr
 
 @bye

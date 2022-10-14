@@ -18,6 +18,8 @@ Added
 
 - Class `PARENT-NODE`
 - Class `CHILD-NODE`
+- Class `BLOCK-NODE`
+- Class `INLINE-NODE`
 
 
 Changed
@@ -26,6 +28,7 @@ Changed
 - Renamed condition `ORPHAN-NODE` to `UNEXPECTED-ORPHAN`
 - Renamed condition `CHILD-NODE` to `UNEXPECTED-CHILD`
 - Concrete node classes now inherit from `PARENT-NODE` and/or `CHILD-NODE`
+- Concrete node classes now inherit from either `BLOCK-NODE` or `INLINE-NODE`
 
 
 [0.4.0] - 2022-10-13
