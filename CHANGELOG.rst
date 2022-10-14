@@ -10,6 +10,24 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
+Unreleased
+##########
+
+Added
+=====
+
+- Class `PARENT-NODE`
+- Class `CHILD-NODE`
+
+
+Changed
+=======
+
+- Renamed condition `ORPHAN-NODE` to `UNEXPECTED-ORPHAN`
+- Renamed condition `CHILD-NODE` to `UNEXPECTED-CHILD`
+- Concrete node classes now inherit from `PARENT-NODE` and/or `CHILD-NODE`
+
+
 [0.4.0] - 2022-10-13
 ####################
 

@@ -389,106 +389,105 @@ The inline nodes are as follows:
 
 @end itemize
 
-Furthermore, each node can only ever be an intermediate node or a leaf node.
-The leaf nodes are as follows:
-
-@itemize
-
-@item @code{HTML-BLOCK-NODE}
-@item @code{THEMATIC-BREAK-NODE}
-@item @code{CODE-BLOCK-NODE}
-@item @code{TEXT-NODE}
-@item @code{SOFTBREAK-NODE}
-@item @code{LINEBREAK-NODE}
-@item @code{CODE-NODE}
-@item @code{HTML-INLINE-NODE}
-
-@end itemize
+Furthermore, each node can only ever be a root node, an intermediate node or a
+leaf node. Leaf nodes are those that have no children, which means they do not
+inherit from @code{PARENT-NODE}. Intermediate nodes inherit from
+@code{PARENT-NODE} and @code{CHILD-NODE}. A root node is one that does not
+inherit from @code{CHILD-NODE}; currently @code{DOCUMENT-NODE} is the only root
+node class.
 
 The following class definition only cover the different node classes briefly.
 Please refer to the built-in documentation for details on their slots.
 
-@deftp {Standard class} NODE PARENT CHILDREN USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
+@deftp {Standard class} NODE USER-DATA START-LINE START-COLUMN END-LINE END-COLUMN
 The parent class of all nodes.
 @end deftp
 
-@deftp {Standard class} DOCUMENT-NODE
+@deftp {Standard class} {PARENT-NODE (NODE)} CHILDREN
+The parent class of all nodes which can have child nodes.
+@end deftp
+
+@deftp {Standard class} {CHILD-NODE (NODE)} PARENT
+The parent class of all which can have a parent node.
+@end deftp
+
+@deftp {Standard class} {DOCUMENT-NODE (PARENT-NODE)}
 The root node of the document.
 @end deftp
 
-@deftp {Standard class} BLOCK-QUOTE-NODE 
+@deftp {Standard class} {BLOCK-QUOTE-NODE (PARENT-NODE CHILD-NODE)} 
 A quotation block node.
 @end deftp
 
-@deftp {Standard class} LIST-NODE TYPE DELIM START TIGHTP
+@deftp {Standard class} {LIST-NODE (PARENT-NODE CHILD-NODE)} TYPE DELIM START TIGHTP
 A list, can be ordered or unordered.
 @end deftp
 
-@deftp {Standard class} ITEM-NODE 
-A list item.
+@deftp {Standard class} {ITEM-NODE (PARENT-NODE CHILD-NODE)} 
+Represents an item inside a list (bullet or unordered).
 @end deftp
 
-@deftp {Standard class} CODE-BLOCK-NODE FENCE-INFO LITERAL
+@deftp {Standard class} {CODE-BLOCK-NODE (CHILD-NODE)} FENCE-INFO LITERAL
 A block of code, regardless of whether it is a fenced code block or an indented one.
 @end deftp
 
-@deftp {Standard class} HTML-BLOCK-NODE LITERAL
+@deftp {Standard class} {HTML-BLOCK-NODE (CHILD-NODE)} LITERAL
 Block-level embedded HTML code.
 @end deftp
 
-@deftp {Standard class} CUSTOM-BLOCK-NODE ON-ENTER ON-EXIT
+@deftp {Standard class} {CUSTOM-BLOCK-NODE (PARENT-NODE CHILD-NODE)} ON-ENTER ON-EXIT
 A user-defined node which produces custom text.
 @end deftp
 
-@deftp {Standard class} PARAGRAPH-NODE 
+@deftp {Standard class} {PARAGRAPH-NODE (PARENT-NODE CHILD-NODE)} 
 A paragraph of the document.
 @end deftp
 
-@deftp {Standard class} HEADING-NODE LEVEL
+@deftp {Standard class} {HEADING-NODE (PARENT-NODE CHILD-NODE)} LEVEL
 A heading with variable level.
 @end deftp
 
-@deftp {Standard class} THEMATIC-BREAK-NODE 
+@deftp {Standard class} {THEMATIC-BREAK-NODE (CHILD-NODE)}
 Represents a thematic break within the content of the document.
 @end deftp
 
-@deftp {Standard class} TEXT-NODE LITERAL
+@deftp {Standard class} {TEXT-NODE (CHILD-NODE)} LITERAL
 Plain text content.
 @end deftp
 
-@deftp {Standard class} SOFTBREAK-NODE 
+@deftp {Standard class} {SOFTBREAK-NODE (CHILD-NODE)}
 A line break which may be rendered differently depending on the rendering options.
 @end deftp
 
-@deftp {Standard class} LINEBREAK-NODE 
+@deftp {Standard class} {LINEBREAK-NODE (CHILD-NODE)}
 A hard line break which does not terminate the current block level element.
 @end deftp
 
-@deftp {Standard class} CODE-NODE LITERAL
+@deftp {Standard class} {CODE-NODE (CHILD-NODE)} LITERAL
 Inline verbatim code.
 @end deftp
 
-@deftp {Standard class} HTML-INLINE-NODE LITERAL
+@deftp {Standard class} {HTML-INLINE-NODE (CHILD-NODE)} LITERAL
 Inline embedded HTML code.
 @end deftp
 
-@deftp {Standard class} CUSTOM-INLINE-NODE ON-ENTER ON-EXIT
+@deftp {Standard class} {CUSTOM-INLINE-NODE (PARENT-NODE CHILD-NODE)} ON-ENTER ON-EXIT
 A user-defined node which produces custom text.
 @end deftp
 
-@deftp {Standard class} EMPH-NODE 
+@deftp {Standard class} {EMPH-NODE (PARENT-NODE CHILD-NODE)}
 Container for emphatic text.
 @end deftp
 
-@deftp {Standard class} STRONG-NODE 
+@deftp {Standard class} {STRONG-NODE (PARENT-NODE CHILD-NODE)}
 Container for strong text.
 @end deftp
 
-@deftp {Standard class} LINK-NODE URL TITLE
+@deftp {Standard class} {LINK-NODE (PARENT-NODE CHILD-NODE)} URL TITLE
 Hyperlink with target URL and title.
 @end deftp
 
-@deftp {Standard class} IMAGE-NODE URL TITLE
+@deftp {Standard class} {IMAGE-NODE (PARENT-NODE CHILD-NODE)} URL TITLE
 Hyperlink with target URL and alt-text.
 @end deftp
 
@@ -513,6 +512,17 @@ Whether a @var{NODE} is a block-level node (as opposed to an inline node).
 
 @deffn {Generic function} LEAF-NODE-P NODE
 Whether a @var{NODE} is a leaf-type node or not.
+@end deffn
+
+
+@subsection Node accessors
+
+@deffn {Generic function} NODE-PARENT node
+Parent node of @var{NODE}, or @code{NIL} if there is none.
+@end deffn
+
+@deffn {Generic function} NODE-CHILDREN node
+List of children of a @var{NODE}.
 @end deffn
 
 

@@ -3,7 +3,7 @@
   (:use #:cl)
   (:export 
     ;; Conditions
-    parser-exhausted orphan-node child-node
+    parser-exhausted unexpected-orphan unexpected-parent
     ;; Restarts
     detach-from-parent prepend-to-parent append-to-parent
     insert-before-sibling  insert-after-sibling
@@ -16,7 +16,8 @@
     finish-streaming-parser
     with-streaming-parser
     ;; Node
-    node document-node block-quote-node list-node item-node code-block-node
+    node parent-node child-node
+    document-node block-quote-node list-node item-node code-block-node
     html-block-node custom-block-node paragraph-node heading-node
     thematic-break-node text-node softbreak-node linebreak-node code-node
     html-inline-node custom-inline-node emph-node strong-node link-node
