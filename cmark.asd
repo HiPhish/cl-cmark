@@ -2,7 +2,7 @@
   :description "Common Lisp bindings to libcmark, the CommonMark reference implementation"
   :author "HiPhish <hiphish@posteo.de>"
   :license "BSD-2-Clause"
-  :version "0.1.0"
+  :version (:read-file-line "version.txt")
   :serial t
   :depends-on ("libcmark" "cffi" "flexi-streams")
   :components ((:module "src"
@@ -21,7 +21,7 @@
   :description "Tests for cl-cmark"
   :author "HiPhish <hiphish@posteo.de>"
   :license "BSD-2-Clause"
-  :version "0.1.0"
+  :version (:read-file-line "version.txt")
   :serial t
   :depends-on (#:cmark "fiveam" "cl-fad")
   :serial t
