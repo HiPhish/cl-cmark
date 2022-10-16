@@ -17,6 +17,7 @@ Fixed
 =====
 
 - Wrong version number in ASDF definition files
+- Wrong version number in user manual
 
 
 [0.5.0] - 2022-10-14
