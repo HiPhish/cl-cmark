@@ -10,6 +10,15 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
+Unreleased
+##########
+
+Fixed
+=====
+
+- Wrong version number in ASDF definition files
+
+
 [0.5.0] - 2022-10-14
 ####################
 
