@@ -10,8 +10,8 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
-Unreleased
-##########
+[0.5.1] - 2022-10-16
+####################
 
 Fixed
 =====
