@@ -17,6 +17,9 @@ Changed
 =======
 
 - All exports are now denoted by uninterned keyword symbols
+- Condition `PARSER-EXHAUSTED` is now of type `SIMPLE-ERROR`
+- Condition `UNEXPECTED-ORPHAN` is now of type `SIMPLE-ERROR`
+- Condition `UNEXPECTED-PARENT` is now of type `SIMPLE-ERROR`
 
 
 [0.5.1] - 2022-10-16
