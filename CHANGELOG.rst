@@ -10,6 +10,15 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
+Unreleased
+##########
+
+Changed
+=======
+
+- All exports are now denoted by uninterned keyword symbols
+
+
 [0.5.1] - 2022-10-16
 ####################
 

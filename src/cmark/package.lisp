@@ -3,42 +3,42 @@
   (:use #:cl)
   (:export 
     ;; Conditions
-    parser-exhausted unexpected-orphan unexpected-parent
+    #:parser-exhausted #:unexpected-orphan #:unexpected-parent
     ;; Restarts
-    detach-from-parent prepend-to-parent append-to-parent
-    insert-before-sibling  insert-after-sibling
+    #:detach-from-parent #:prepend-to-parent #:append-to-parent
+    #:insert-before-sibling  #:insert-after-sibling
     ;; Parsing
-    parse-document
-    parse-stream
-    make-streaming-parser
-    feed-streaming-parser
-    close-streaming-parser
-    finish-streaming-parser
-    with-streaming-parser
+    #:parse-document
+    #:parse-stream
+    #:make-streaming-parser
+    #:feed-streaming-parser
+    #:close-streaming-parser
+    #:finish-streaming-parser
+    #:with-streaming-parser
     ;; Node
-    node parent-node child-node
-    document-node block-quote-node list-node item-node code-block-node
-    html-block-node custom-block-node paragraph-node heading-node
-    thematic-break-node text-node softbreak-node linebreak-node code-node
-    html-inline-node custom-inline-node emph-node strong-node link-node
-    image-node
+    #:node #:parent-node #:child-node
+    #:document-node #:block-quote-node #:list-node #:item-node #:code-block-node
+    #:html-block-node #:custom-block-node #:paragraph-node #:heading-node
+    #:thematic-break-node #:text-node #:softbreak-node #:linebreak-node #:code-node
+    #:html-inline-node #:custom-inline-node #:emph-node #:strong-node #:link-node
+    #:image-node
     ;; Node accessors
-    node-parent node-children node-literal
-    node-list-type node-list-delim node-list-start
-    node-heading-level
-    node-title node-url
+    #:node-parent #:node-children #:node-literal
+    #:node-list-type #:node-list-delim #:node-list-start
+    #:node-heading-level
+    #:node-title #:node-url
     ;; Node predicates
-    orphanp childlessp inline-node-p block-node-p leaf-node-p
+    #:orphanp #:childlessp #:inline-node-p #:block-node-p #:leaf-node-p
     ;; Tree traversal
-    node-first-child node-last-child
-    node-next node-previous
-    node-next-sibling node-previous-sibling
-    which-child
-    ;; Tree manipulation
-    unlink-node insert-node-before insert-node-after
-    replace-node prepend-child-node append-child-node
-    consolidate-text-nodes
+    #:node-first-child #:node-last-child
+    #:node-next #:node-previous
+    #:node-next-sibling #:node-previous-sibling
+    #:which-child
+    ;; Tree #:manipulation
+    #:unlink-node #:insert-node-before #:insert-node-after
+    #:replace-node #:prepend-child-node #:append-child-node
+    #:consolidate-text-nodes
     ;; Iteration
-    done enter exit
-    walk-tree
-    make-iterator iterator-reset iterator-advance))
+    #:done #:enter #:exit
+    #:walk-tree
+    #:make-iterator #:iterator-reset #:iterator-advance))
