@@ -1,4 +1,5 @@
-;;;; Node accessor functions
+;;;; Node accessor functions, get and set the node properties through these
+;;;; functions.
 (in-package #:libcmark)
 
 (defcfun ("cmark_node_get_user_data" node-get-user-data) :pointer

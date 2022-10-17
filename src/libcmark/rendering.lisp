@@ -1,4 +1,4 @@
-;;;; Rendering a tree of nodes a target language
+;;;; Rendering a tree of nodes a target language.
 (in-package #:libcmark)
 
 (defcfun ("cmark_render_xml" render-xml) :string

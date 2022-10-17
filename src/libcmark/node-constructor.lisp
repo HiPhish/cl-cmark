@@ -1,4 +1,4 @@
-;;;; Creating and Destroying Nodes
+;;;; Creating and destroying nodes through functions.
 (in-package #:libcmark)
 
 (defcfun ("cmark_node_new" make-node) :pointer

@@ -1,4 +1,5 @@
-;;;; Iterating over the tree nodes
+;;;; Iterating over the tree nodes. Iteration is done through a stateful
+;;;; iterator object that can be moved along the tree.
 (in-package #:libcmark)
 
 (defcenum cmark-event-type

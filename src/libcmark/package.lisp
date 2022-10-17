@@ -1,3 +1,7 @@
+;;;; Package definition; this file declares the entire public interface of the
+;;;; system.
+
+
 (defpackage #:libcmark
   (:documentation
     "Low-level Common Lisp bindings to the libcmark C library. See also the cmark(3) man page.")

@@ -1,4 +1,7 @@
-;;;; Various definitions used in different parts of the library
+;;;; Various definitions used in different parts of the library. This file
+;;;; contains all constants and type declarations from the man page, even if
+;;;; their definitions are scattered throughout the man page otherwise. It is
+;;;; easier to keep them all in one place.
 (in-package #:libcmark)
 
 (define-foreign-library libcmark
@@ -20,7 +23,7 @@
 (defcenum cmark-node-type
   "Kind of Markdown node"
   :cmark_node_none
-  ;; :Block
+  ;; Block
   :cmark-node-document
   :cmark-node-block-quote
   :cmark-node-list
@@ -31,7 +34,7 @@
   :cmark-node-paragraph
   :cmark-node-heading
   :cmark-node-thematic-break
-  ;; :Inline
+  ;; Inline
   :cmark-node-text
   :cmark-node-softbreak
   :cmark-node-linebreak

@@ -1,8 +1,11 @@
-;;;; Option constants; these are meant to be ORed together
+;;;; Option constants; these are meant to be ORed together because they are
+;;;; just numbers in C. We group all the options here together, but group them
+;;;; according to their topic and order by their value.
 (in-package #:libcmark)
 
 (defconstant +cmark-opt-default+ 0
   "Default options.")
+
 
 ;;; Options affecting rendering
 (defconstant +cmark-opt-sourcepos+ (ash 1 1)

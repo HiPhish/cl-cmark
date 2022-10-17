@@ -1,4 +1,4 @@
-;;;; Version information
+;;;; Version information.
 (in-package #:libcmark)
 
 (defcfun ("cmark_version" version) :int

@@ -1,4 +1,5 @@
-;;;; Custom memory allocator support
+;;;; Custom memory allocator support, wrapper around the memory allocator
+;;;; object structure.
 (in-package #:libcmark)
 
 (defcstruct cmark-mem

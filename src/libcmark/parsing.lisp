@@ -1,4 +1,4 @@
-;;;; Parsing text into a tree of nodes
+;;;; Parsing text into a tree of nodes.
 (in-package #:libcmark)
 
 (defcfun ("cmark_parser_new" make-parser) :pointer

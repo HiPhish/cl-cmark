@@ -1,4 +1,4 @@
-;;; Traversal of the nodes inside the tree
+;;; Traversal of the nodes inside the tree.
 (in-package #:libcmark)
 
 (defcfun ("cmark_node_next" node-next) :pointer

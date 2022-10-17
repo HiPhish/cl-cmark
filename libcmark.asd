@@ -1,4 +1,3 @@
-;;; NOTE: evaluate (asdf:test-system "cmark") to test the main package
 (asdf:defsystem "libcmark"
   :description "Common Lisp bindings to libcmark, the CommonMark reference implementation"
   :author "HiPhish <hiphish@posteo.de>"
