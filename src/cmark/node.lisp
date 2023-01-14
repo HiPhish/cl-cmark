@@ -21,7 +21,7 @@
   (:documentation "A node which can have child nodes."))
 
 (defclass child-node (node)
-  ((parent :initarg parent :initform nil :type (or node null)
+  ((parent :initarg :parent :initform nil :type (or node null)
            :documentation "Parent node of this node, or NIL if this is a root node"))
   (:documentation "A node which can have a parent node."))
 
