@@ -10,13 +10,18 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
-Unreleased
-##########
+[0.5.1] - 2023-01-15
+####################
 
 Added
 =====
 
 - HACKING file
+
+Fixed
+=====
+
+- Initarg for slot `PARENT` of class `CMARK:CHILD-NODE` is now a keyword
 
 
 Changed

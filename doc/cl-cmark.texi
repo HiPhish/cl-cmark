@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 
-@set VERSION 0.5.1
-@set UPDATED 2022-10-16
+@set VERSION 0.5.2
+@set UPDATED 2023-01-15
 
 @c %**start of header
 @settitle Common Lisp CommonMark user manual 
@@ -13,7 +13,7 @@
 This manual is for cl-cmark (version @value{VERSION}, updated @value{UPDATED}),
 which implements a CommonMark parser for Common Lisp.
 
-Copyright @copyright{} 2022 Alejandro ``HiPhish'' Sanchez
+Copyright @copyright{} 2022-2023 Alejandro ``HiPhish'' Sanchez
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
