@@ -29,6 +29,7 @@
                 :components ((:module "cmark"
                               :components ((:file "package")
                                            (:file "main")
+                                           (:file "constructor")
                                            (:file "tree-manipulation")
                                            (:file "tree-traversal")
                                            (:file "iteration")
