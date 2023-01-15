@@ -10,7 +10,7 @@
   (mapcar #'find-class '(html-block-node thematic-break-node
                          code-block-node text-node softbreak-node
                          linebreak-node code-node html-inline-node))
-  "List of node classes for which no EXIT even will be generated.")
+  "List of node classes for which no EXIT event will be generated.")
 
 (defun walk-tree (node callback)
   "Iterate through the (sub)tree at NODE, calling CALLBACK at every event. The
