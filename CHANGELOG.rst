@@ -10,7 +10,16 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
 
-[0.5.1] - 2023-01-15
+[0.5.3] - 2023-11-07
+####################
+
+Fixed
+=====
+
+- Typo that prevents `libcmark.dll` from being loaded on Windows
+
+
+[0.5.2] - 2023-01-15
 ####################
 
 Added
