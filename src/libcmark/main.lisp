@@ -6,7 +6,7 @@
 
 (define-foreign-library libcmark
   (:unix (:or "libcmark.so.0.30.2" "libcmark.so.0" "libcmark.so"))
-  (:t (:default "libcmark")))
+  (t (:default "libcmark")))
 (use-foreign-library libcmark)
 
 
