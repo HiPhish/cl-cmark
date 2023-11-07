@@ -4,7 +4,12 @@
 
 (defpackage #:libcmark
   (:documentation
-    "Low-level Common Lisp bindings to the libcmark C library. See also the cmark(3) man page.")
+    "Low-level Common Lisp bindings to the libcmark C library.
+
+This system is mostly a 1:1 translation from the C API to Common Lisp.  See the
+cmark(3) man page for comparison. Using this system requires knowledge of how
+the CFFI system (`cffi' package) works and how it handles data types.
+")
   (:use #:cl #:cffi)
   (:export #:markdown-to-html
            #:cmark-node-type #:cmark-list-type #:cmark-delim-type

@@ -1,5 +1,12 @@
 (defpackage #:cmark
-  (:documentation "High-level interface to libcmark")
+  (:documentation "High-level interface to libcmark
+
+The CMARK system provides all the essential classes, functions and methods to
+parse a CommonMark document into a tree of nodes, manipulate the tree, and
+parse it.  This package is the public interface of the CMARK system.
+
+For a more low-level interface to libcmark use the `LIBCMARK' system, which is
+a thin set of bindings from C to Common Lisp.")
   (:use #:cl)
   (:export 
     ;; Conditions
